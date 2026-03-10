@@ -1,0 +1,65 @@
+.detail-form {
+    display: flex;
+    flex-direction: column;
+    --listbox-border: #cbd5e1;
+    --listbox-border-strong: #64748b;
+    --listbox-focus: #1d4ed8;
+    --listbox-surface: #ffffff;
+    --listbox-text: #0f172a;
+    --listbox-muted: #64748b;
+  }
+  
+  .detail-form__field {
+    margin-bottom: 1rem;
+  }
+  
+  .detail-form__field label {
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+  
+  .detail-form__field input,
+  .detail-form__field select {
+    width: 100%;
+    padding: 0.5rem;
+    font-size: 1rem;
+  }
+
+  #vehicleContact {
+    padding: 0.5rem 2rem 0.5rem 0.5rem;
+    border: 1px solid var(--listbox-border);
+    border-radius: 4px;
+    background-color: var(--listbox-surface);
+    color: var(--listbox-text);
+    transition: border-color 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
+    appearance: none;
+    background-image:
+      linear-gradient(45deg, transparent 50%, var(--listbox-muted) 50%),
+      linear-gradient(135deg, var(--listbox-muted) 50%, transparent 50%);
+    background-position:
+      calc(100% - 16px) calc(50% + 2px),
+      calc(100% - 11px) calc(50% + 2px);
+    background-size: 6px 6px, 6px 6px;
+    background-repeat: no-repeat;
+  }
+
+  #vehicleContact:hover {
+    border-color: var(--listbox-border-strong);
+  }
+
+  #vehicleContact:focus,
+  #vehicleContact:focus-visible {
+    border-color: var(--listbox-focus);
+    outline: 3px solid rgba(29, 78, 216, 0.3);
+    outline-offset: 2px;
+  }
+  
+  .detail-form__error {
+    color: red;
+    font-size: 0.875rem;
+  }
+
+  .detail-form__invisible {
+    display: none;
+  }
+  

@@ -1,0 +1,26 @@
+.detail-form {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .detail-form__field {
+    margin-bottom: 1rem;
+  }
+  
+  .detail-form__field label {
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+  
+  .detail-form__field input,
+  .detail-form__field select {
+    width: 100%;
+    padding: 0.5rem;
+    font-size: 1rem;
+  }
+  
+  .detail-form__error {
+    color: red;
+    font-size: 0.875rem;
+  }
+  

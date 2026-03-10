@@ -1,0 +1,79 @@
+.list-view {
+  width: 100%;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.list-view__search {
+  width: 100%;
+  padding: 0.5rem;
+  margin: 0;
+  font-size: 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid #6b7280;
+}
+
+.list-view__search:focus-visible {
+  outline: 3px solid #1d4ed8;
+  outline-offset: 2px;
+}
+
+.list-view__table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid #d1d5db;
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+.list-view__table th,
+.list-view__table td {
+  padding: 0.625rem 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+}
+
+.list-view__table th {
+  background-color: #f8fafc;
+  font-weight: 600;
+}
+
+.list-view__table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.list-view__table tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+.list-view__select-col {
+  width: 3rem;
+  text-align: center;
+}
+
+.list-view__select-col input[type='checkbox'] {
+  width: 1rem;
+  height: 1rem;
+  accent-color: #1d4ed8;
+}
+
+.list-view__actions-col {
+  width: 7rem;
+}
+
+.list-view__link-button {
+  background: none;
+  border: none;
+  color: #1d4ed8;
+  text-align: left;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+  font: inherit;
+}
+
+.list-view__link-button:focus-visible {
+  outline: 3px solid #1d4ed8;
+  outline-offset: 2px;
+}
