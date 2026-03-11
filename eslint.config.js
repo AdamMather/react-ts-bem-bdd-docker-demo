@@ -5,7 +5,14 @@ const reactRefreshPlugin = require('eslint-plugin-react-refresh');
 
 module.exports = [
   {
-    ignores: ['dist/**', 'node_modules/**', 'src/server/**', 'eslint.config.js'],
+    ignores: [
+      'dist/**',
+      'node_modules/**',
+      'playwright-report/**',
+      'test-results/**',
+      'src/server/**',
+      'eslint.config.js',
+    ],
   },
   js.configs.recommended,
   {
