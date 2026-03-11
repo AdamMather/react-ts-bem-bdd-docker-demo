@@ -1,50 +1,63 @@
 .list-view {
   width: 100%;
   display: grid;
-  gap: 0.75rem;
+  gap: 1rem;
+  font-family: "Inter", system-ui, sans-serif;
+  color: #1e293b; /* dark slate for body text */
+  background-color: #f9fafb; /* very light neutral background */
+  padding: 1rem;
+  border-radius: 0.75rem;
 }
 
 .list-view__search {
-  width: 100%;
-  padding: 0.5rem;
-  margin: 0;
+  padding: 0.75rem 1rem;
   font-size: 1rem;
-  border-radius: 0.5rem;
-  border: 1px solid #6b7280;
+  border-radius: 0.75rem;
+  border: 1px solid #cbd5e1; /* light blue-gray border */
+  background-color: #ffffff;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .list-view__search:focus-visible {
-  outline: 3px solid #1d4ed8;
-  outline-offset: 2px;
+  outline: none;
+  border-color: #3b82f6; /* vibrant blue */
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4);
 }
 
 .list-view__table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  border: 1px solid #d1d5db;
+  border: none;
   border-radius: 0.75rem;
   overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  background-color: #ffffff;
 }
 
 .list-view__table th,
 .list-view__table td {
-  padding: 0.625rem 0.75rem;
-  border-bottom: 1px solid #e5e7eb;
+  padding: 0.75rem 1rem;
   text-align: left;
 }
 
 .list-view__table th {
-  background-color: #f8fafc;
+  background-color: #e0f2fe; /* soft blue header */
+  color: #0369a1; /* dark blue for contrast */
   font-weight: 600;
 }
 
-.list-view__table tbody tr:last-child td {
-  border-bottom: none;
+.list-view__table tbody tr {
+  border-bottom: 1px solid #e2e8f0;
+  transition: background-color 0.2s ease;
 }
 
 .list-view__table tbody tr:hover {
-  background-color: #f8fafc;
+  background-color: #f0f9ff; /* subtle light blue hover */
+}
+
+.list-view__table tbody tr:last-child {
+  border-bottom: none;
 }
 
 .list-view__select-col {
@@ -53,9 +66,10 @@
 }
 
 .list-view__select-col input[type='checkbox'] {
-  width: 1rem;
-  height: 1rem;
-  accent-color: #1d4ed8;
+  width: 1.125rem;
+  height: 1.125rem;
+  accent-color: #3b82f6; /* consistent accent */
+  cursor: pointer;
 }
 
 .list-view__actions-col {
@@ -65,15 +79,19 @@
 .list-view__link-button {
   background: none;
   border: none;
-  color: #1d4ed8;
-  text-align: left;
-  cursor: pointer;
+  color: #3b82f6; /* bright modern blue */
   text-decoration: underline;
   padding: 0;
   font: inherit;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.list-view__link-button:hover {
+  color: #1d4ed8; /* deeper blue on hover */
 }
 
 .list-view__link-button:focus-visible {
-  outline: 3px solid #1d4ed8;
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4);
 }
