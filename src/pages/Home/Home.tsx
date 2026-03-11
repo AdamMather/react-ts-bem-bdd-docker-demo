@@ -176,7 +176,16 @@ const Home: React.FC = () => {
     <div className="home" role="application" aria-label="Contact management application" data-testid="home-page">
       {view === navContactList && (
         <>
-          <ActionBar onAdd={handleAddContact} onDelete={handleDeleteContacts} apiUrl={apiContacts} selectedIds={selectedIds} domain={'Contact'} isDeleteDisabled={selectedIds.length === 0} />
+          <ActionBar
+            onAdd={handleAddContact}
+            onDelete={handleDeleteContacts}
+            apiUrl={apiContacts}
+            selectedIds={selectedIds}
+            domain={'Contact'}
+            isDeleteDisabled={selectedIds.length === 0}
+            linkTo="/stock-control"
+            linkLabel="Stock Control"
+          />
           <ListView onSelected={handleSelectContact} onEdit={handleEditContact} fields={['first_name', 'last_name', 'email']} selectedIds={selectedIds} apiUrl={apiContacts}/>
         </>
       )}
