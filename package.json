@@ -12,6 +12,7 @@
     "test:playwright": "start-server-and-test \"vite --host 127.0.0.1 --port 3000 --strictPort\" http://127.0.0.1:3000 \"playwright test --reporter=line\"",
     "test:playwright:ui": "start-server-and-test \"vite --host 127.0.0.1 --port 3000 --strictPort\" http://127.0.0.1:3000 \"playwright test --ui\"",
     "test:playwright:update-snapshots": "start-server-and-test \"vite --host 127.0.0.1 --port 3000 --strictPort\" http://127.0.0.1:3000 \"playwright test tests/e2e/visual.spec.js --update-snapshots\"",
+    "ci-local": "npm ci && npm run lint && npm run test:gherkin",
     "preview": "vite preview"
   },
   "dependencies": {
