@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import ActionBar from '../../components/ActionBar/ActionBar';
 import ListView from '../../components/ListView/ListView';
 import ContactDetail from '../../components/ContactDetail/ContactDetail';
@@ -7,7 +7,7 @@ import VehicleDetail from '../../components/VehicleDetail/VehicleDetail';
 import config from '../../config';
 import useFetchRecord from '../../utils/data';
 import { Contact, Address, Vehicle } from '../../types';
-import mockApi from '../../services/mockApi';
+import apiClient from '../../services/apiClient';
 import './Home.css';
 
 const Home: React.FC = () => {
@@ -30,6 +30,26 @@ const Home: React.FC = () => {
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [bannerMessage, setBannerMessage] = useState<string | null>(null);
+  const bannerTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (bannerTimeoutRef.current) {
+        clearTimeout(bannerTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const showBanner = (message: string) => {
+    setBannerMessage(message);
+    if (bannerTimeoutRef.current) {
+      clearTimeout(bannerTimeoutRef.current);
+    }
+    bannerTimeoutRef.current = setTimeout(() => {
+      setBannerMessage(null);
+    }, 2500);
+  };
 
   const handleAddContact = () => {
     setSelectedContact(null);
@@ -77,7 +97,7 @@ const Home: React.FC = () => {
   const handleDeleteContacts = async (_apiUrl?: string, ids: number[] = selectedIds) => {
     if (ids.length === 0) return;
 
-    await mockApi.delete(apiContacts, {
+    await apiClient.delete(apiContacts, {
       data: { ids },
     });
     setSelectedIds([]);
@@ -89,16 +109,17 @@ const Home: React.FC = () => {
       if (contact.id) {
         console.log('contact update...');
         console.log(`path: ${apiContacts} id: ${contact.id}`);
-        await mockApi.put(`${apiContacts}/${contact.id}`, contact);
+        await apiClient.put(`${apiContacts}/${contact.id}`, contact);
         console.log('update successful!');
       } else {
         console.log('create contact...');
-        await mockApi.post(apiContacts, contact);
+        await apiClient.post(apiContacts, contact);
         console.log('successfully created!');
       }
       // Refresh the list view
       console.log('record successfully saved!')
       setView(navContactList);
+      showBanner('Contact saved successfully.');
     } catch (error) {
       console.error('Error saving contact record:', error);
     }
@@ -114,17 +135,18 @@ const Home: React.FC = () => {
       if (address.id) {
         console.log('address update...');
         console.log(`path: ${apiAddress} id: ${address.id}`);
-        await mockApi.put(`${apiAddress}/${address.id}`, address);
+        await apiClient.put(`${apiAddress}/${address.id}`, address);
         console.log('update successful!');
       } else {
         console.log('create address...');
-        await mockApi.post(apiAddress, address);
+        await apiClient.post(apiAddress, address);
         console.log('successfully created!');
       }
       fetchRecord(apiAddress);
       // Refresh the list view
       console.log('record successfully saved!')
-      setView(navAddress);
+      setView(navContactList);
+      showBanner('Address saved successfully.');
     } catch (error) {
       console.error('Error saving address record:', error);
     }
@@ -135,17 +157,18 @@ const Home: React.FC = () => {
       if (vehicle.id) {
         console.log('vehicle update...');
         console.log(`path: ${apiVehicles} id: ${vehicle.id}`);
-        await mockApi.put(`${apiVehicles}/${vehicle.id}`, vehicle);
+        await apiClient.put(`${apiVehicles}/${vehicle.id}`, vehicle);
         console.log('update successful!');
       } else {
         console.log('create vehicle...');
-        await mockApi.post(apiVehicles, vehicle);
+        await apiClient.post(apiVehicles, vehicle);
         console.log('successfully created!');
       }
       fetchRecord(apiVehicles);
       // Refresh the list view
       console.log('record successfully saved!')
-      setView(navContacts);
+      setView(navContactList);
+      showBanner('Vehicle saved successfully.');
     } catch (error) {
       console.error('Error saving vehicle record:', error);
     }
@@ -161,7 +184,7 @@ const Home: React.FC = () => {
     console.log(`selectedIds not empty array...`);
 
     try {
-      await mockApi.delete(apiUrl, {
+      await apiClient.delete(apiUrl, {
         data: { selectedIds: ids },
       });
       setSelectedIds([]);
@@ -174,6 +197,11 @@ const Home: React.FC = () => {
 
   return (
     <div className="home" role="application" aria-label="Contact management application" data-testid="home-page">
+      {bannerMessage ? (
+        <div className="home__banner" role="status" aria-live="polite" aria-atomic="true" data-testid="save-banner">
+          {bannerMessage}
+        </div>
+      ) : null}
       {view === navContactList && (
         <>
           <ActionBar onAdd={handleAddContact} onDelete={handleDeleteContacts} apiUrl={apiContacts} selectedIds={selectedIds} domain={'Contact'} isDeleteDisabled={selectedIds.length === 0} />

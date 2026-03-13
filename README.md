@@ -77,7 +77,7 @@ Run the container (serves on port 8080):
 docker run --rm -p 8080:80 vac-test
 ```
 
-Or use Docker Compose:
+Or use Docker Compose (starts Postgres, API server, then the web app):
 
 ```bash
 docker-compose up --build

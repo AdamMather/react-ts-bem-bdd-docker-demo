@@ -1,0 +1,14 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci
+
+COPY src ./src
+ENV API_HOST=0.0.0.0
+ENV API_PORT=3001
+
+EXPOSE 3001
+
+CMD ["node", "src/server/index.js"]

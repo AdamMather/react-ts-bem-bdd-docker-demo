@@ -1,5 +1,47 @@
 services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: vac
+      POSTGRES_USER: vac
+      POSTGRES_PASSWORD: vacpass
+    ports:
+      - "5433:5433"
+    volumes:
+      - ./db/migration.sql:/docker-entrypoint-initdb.d/migration.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vac -d vac"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    environment:
+      API_HOST: 0.0.0.0
+      API_PORT: 3001
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: vac
+      DB_USER: vac
+      DB_PASSWORD: vacpass
+    ports:
+      - "3001:3001"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"const http=require('http');const req=http.get('http://127.0.0.1:3001/api/health',res=>process.exit(res.statusCode===200?0:1));req.on('error',()=>process.exit(1));\""]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   web:
     build: .
     ports:
-      - "8080:80"
+      - "2026:80"
+    depends_on:
+      api:
+        condition: service_healthy

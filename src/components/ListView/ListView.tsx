@@ -1,7 +1,7 @@
 // src/components/ListView/ListView.tsx
 import React, { useState, useEffect } from 'react';
 import { Contact, Vehicle } from '../../types';
-import mockApi from '../../services/mockApi';
+import apiClient from '../../services/apiClient';
 import './ListView.css';
 
 interface ListViewProps {
@@ -25,7 +25,7 @@ const ListView: React.FC<ListViewProps> = ({ onSelected, onEdit, fields, selecte
   const fetchList = async (api: string) => {
     console.log(`api: ${api}`);
     try {
-      const response = await mockApi.get(api);
+      const response = await apiClient.get(api);
       const data = response.data;
       if (data.length > 0) {
         setAttributes(Object.keys(data[0]));
