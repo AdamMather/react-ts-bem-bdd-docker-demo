@@ -6,7 +6,7 @@ services:
       POSTGRES_USER: vac
       POSTGRES_PASSWORD: vacpass
     ports:
-      - "5433:5433"
+      - "5433:5432"
     volumes:
       - ./db/migration.sql:/docker-entrypoint-initdb.d/migration.sql:ro
     healthcheck:
