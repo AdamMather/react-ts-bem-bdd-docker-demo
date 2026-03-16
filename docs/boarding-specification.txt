@@ -1,0 +1,372 @@
+Digital Boarding Kennel Booking Form (Recommended Layout)
+Step 1 — Owner Details
+
+Owner / Primary Contact
+
+Full name
+
+Address
+
+Postcode
+
+Phone number
+
+Email address
+
+Emergency Contact (required)
+
+Name
+
+Relationship
+
+Phone number
+
+Preferred contact method
+
+☐ Phone
+
+☐ Email
+
+☐ Text
+
+Step 2 — Pet Details
+
+Pet Identification
+
+Pet name
+
+Species
+
+Breed
+
+Date of birth / age
+
+Sex
+
+☐ Male
+
+☐ Female
+
+Neutered/spayed
+
+☐ Yes
+
+☐ No
+
+Physical description
+
+Colour
+
+Distinguishing features
+
+Microchip number
+
+Upload option:
+
+📎 Upload photo of pet
+
+Step 3 — Veterinary Information
+
+Registered Vet
+
+Vet practice name
+
+Vet phone number
+
+Emergency Vet Consent
+
+☐ I authorise the kennel to seek veterinary treatment if required.
+
+Optional authorisation limit
+
+Maximum treatment cost authorised without contacting owner:
+£ ______
+
+Step 4 — Pet Insurance (Optional but Recommended)
+
+Insurance Provider
+
+Examples owners may enter:
+
+Petplan
+
+ManyPets
+
+Agria
+
+Bought By Many
+
+Fields:
+
+Insurance provider name
+
+Policy holder name
+
+Policy number
+
+Emergency claims phone number
+
+Optional:
+
+Excess amount (£)
+
+Known exclusions (e.g. pre-existing conditions)
+
+Consent statement
+
+☐ I understand the kennel does not process insurance claims but may provide details to my vet if treatment is required.
+
+Step 5 — Vaccination Record
+
+Upload vaccination proof.
+
+Required vaccinations (checkbox confirmation):
+
+Dogs
+
+☐ Distemper
+
+☐ Parvovirus
+
+☐ Hepatitis
+
+☐ Leptospirosis
+
+Optional but common:
+
+☐ Kennel cough vaccination
+
+
+Next vaccination due date: _______
+
+Upload:
+
+📎 Upload vaccination card
+
+Step 6 — Health & Medication
+
+Current health conditions
+
+Free text field.
+
+Medication required?
+
+☐ Yes
+☐ No
+
+If yes:
+
+Medication name
+
+Dose
+
+Administration time
+
+Special instructions
+
+Recent illness (last 30 days)
+
+☐ Yes
+☐ No
+
+Parasite treatment
+
+Last flea treatment date
+
+Last worming treatment date
+
+Step 7 — Behaviour & Temperament
+
+Important for safety.
+
+Questions such as:
+
+Can your dog mix with other dogs?
+☐ Yes ☐ No ☐ Unsure
+
+Has your dog ever shown aggression toward:
+
+Dogs ☐
+
+People ☐
+
+Separation anxiety?
+☐ Yes ☐ No
+
+Escape risk?
+☐ Yes ☐ No
+
+Fears or triggers (noise, storms, etc.)
+
+Step 8 — Feeding & Routine
+
+Food provided by owner?
+
+☐ Yes
+☐ No
+
+Fields:
+
+Food type
+
+Feeding times
+
+Portion size
+
+Optional:
+
+Treats allowed?
+
+Exercise preferences
+
+Sleeping routine
+
+Step 9 — Boarding Dates
+
+Arrival date
+
+Departure date
+
+Estimated drop-off time
+
+Estimated collection time
+
+Optional extras:
+
+Grooming
+
+Additional exercise
+
+Training session
+
+Step 10 — Terms & Agreement
+
+Key statements typically included:
+
+☐ I confirm my pet is vaccinated and free from contagious illness.
+
+☐ I authorise the kennel to obtain veterinary treatment if required.
+
+☐ I accept responsibility for veterinary costs incurred.
+
+☐ I confirm all information provided is accurate.
+
+☐ I agree to the kennel’s boarding terms.
+
+Digital signature field:
+
+Signature
+
+Date
+
+Data Protection Section
+
+Because you collect personal data, you should include a privacy statement referencing the **UK General Data Protection Regulation.
+
+Example:
+
+“Your information is stored securely and used only for managing your pet’s boarding stay.”
+
+Checkbox:
+
+☐ I consent to my data being stored for booking and welfare records.
+
+Good Digital Features to Add
+
+A strong kennel booking system usually includes:
+
+1. Document uploads
+
+Vaccination certificates
+
+Pet photos
+
+2. Automatic reminders
+
+Vaccination expiry alerts
+
+Booking confirmations
+
+3. Repeat customer profiles
+Owners don’t have to re-enter pet information.
+
+4. Vet emergency summary
+One-click printable record for the vet.
+
+
+Health Information
+
+Medical conditions
+Allergies
+Medication
+
+Medication schedule:
+
+Morning
+Afternoon
+Evening
+
+Last flea treatment date
+Last worming date
+
+Behaviour Profile
+
+Friendly with dogs?
+☐ Yes ☐ No ☐ Selectively
+
+Friendly with people?
+☐ Yes ☐ No
+
+Separation anxiety?
+☐ Yes ☐ No
+
+Escape risk?
+☐ Yes ☐ No
+
+Triggers / fears:
+
+Thunder
+
+Loud noises
+
+Motorbikes
+
+Children
+
+Other animals
+
+Daily Care Instructions
+
+Food type
+Feeding schedule
+
+Exercise level:
+
+☐ Low
+☐ Medium
+☐ High
+
+Sleeping preference:
+
+☐ Kennel bedding
+☐ Owner bedding
+
+Allowed treats?
+☐ Yes ☐ No
+
+Boarding Booking (for each stay)
+
+Arrival date
+Departure date
+
+Owner instructions:
+
+Owner Agreement
+
+☐ Pet is vaccinated
+☐ Pet is free from contagious illness
+☐ Vet treatment authorised
+☐ Owner responsible for vet costs
+
+Digital signature
+Date
