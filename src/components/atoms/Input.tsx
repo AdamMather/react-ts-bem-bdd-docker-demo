@@ -15,6 +15,7 @@ interface InputProps {
   ariaControls?: string;
   ariaHaspopup?: string;
   autoComplete?: string;
+  testId?: string;
 }
 
 const Input: FC<InputProps> = ({
@@ -31,6 +32,7 @@ const Input: FC<InputProps> = ({
   ariaControls,
   ariaHaspopup,
   autoComplete,
+  testId,
 }) => {
   return (
     <input
@@ -47,6 +49,7 @@ const Input: FC<InputProps> = ({
       aria-controls={ariaControls}
       aria-haspopup={ariaHaspopup}
       autoComplete={autoComplete}
+      data-testid={testId}
     />
   );
 };

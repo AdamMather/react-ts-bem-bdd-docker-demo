@@ -8,10 +8,10 @@ interface AutoCompleteTextboxProps {
   name: string;
   label: string;
   value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   placeholder?: string;
   ariaLabel: string;
-  apiUrl: string;
+  apiUrl?: string;
 }
 
 const AutoCompleteTextbox: FC<AutoCompleteTextboxProps> = ({ id, name, label, value, onChange, placeholder = '', ariaLabel, apiUrl }) => {
@@ -26,11 +26,11 @@ const AutoCompleteTextbox: FC<AutoCompleteTextboxProps> = ({ id, name, label, va
   }, [value]);
   
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
     onChange(e);
 
-    if (inputValue.length > 0) {
+    if (inputValue.length > 0 && apiUrl) {
       fetchSuggestions(apiUrl, inputValue);
     } else {
       setSuggestions([]);

@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Contact, Vehicle } from '../../types';
 import apiClient from '../../services/apiClient';
+import SearchInput from '../molecules/SearchInput';
 import './ListView.css';
 
 interface ListViewProps {
@@ -70,14 +71,15 @@ const ListView: React.FC<ListViewProps> = ({ onSelected, onEdit, fields, selecte
 
   return (
     <div className="list-view" role="region" aria-label="Searchable list" data-testid="list-view">
-      <input
-        type="text"
-        className="list-view__search"
-        placeholder="Search..."
+      <SearchInput
+        id="list-view-search"
+        name="list-view-search"
         value={search}
         onChange={handleSearchChange}
-        aria-label="Search list"
-        data-testid="list-view-search"
+        placeholder="Search..."
+        ariaLabel="Search list"
+        className="list-view__search"
+        testId="list-view-search"
       />
       <table className="list-view__table" aria-label="Results table" data-testid="list-view-table">
         <thead>

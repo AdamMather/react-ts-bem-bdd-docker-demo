@@ -4,7 +4,7 @@ import config, { vehicleDetail } from '../../config';
 import useFetchRecord from '../../utils/data';
 import useDateFormatter from '../../utils/date';
 import './VehicleDetail.css';
-import AutoCompleteTextbox from '../organisms/AutoCompleteTextbox';
+import FilterTextbox from '../organisms/FilterTextbox';
 
 interface VehicleDetailProps {
   onSaveVehicle: (vehicle: Vehicle) => void;
@@ -76,8 +76,8 @@ const VehicleDetail: React.FC<VehicleDetailProps> = ({ onSaveVehicle, vehicle })
           ))}
         </select>
       </div>
-      <AutoCompleteTextbox id={vehicleMake.id} name={vehicleMake.name} onChange={handleChange} label={vehicleMake.label} value={formVehicle.make} placeholder={vehicleMake.placeholder} ariaLabel={vehicleMake.ariaLabel} apiUrl={utilsVehicleMake} />
-      <AutoCompleteTextbox id={vehicleModel.id} name={vehicleModel.name} onChange={handleChange} label={vehicleModel.label} value={formVehicle.model} placeholder={vehicleModel.placeholder} ariaLabel={vehicleModel.ariaLabel} apiUrl={utilsVehicleModel} />
+      <FilterTextbox id={vehicleMake.id} name={vehicleMake.name} onChange={handleChange} label={vehicleMake.label} value={formVehicle.make} placeholder={vehicleMake.placeholder} ariaLabel={vehicleMake.ariaLabel} apiUrl={utilsVehicleMake} />
+      <FilterTextbox id={vehicleModel.id} name={vehicleModel.name} onChange={handleChange} label={vehicleModel.label} value={formVehicle.model} placeholder={vehicleModel.placeholder} ariaLabel={vehicleModel.ariaLabel} apiUrl={utilsVehicleModel} />
       {/* <div className="detail-form__field">
         <label htmlFor="make">Make</label>
         <input id="make" name="make" type="text" onChange={handleChange} value={formVehicle.make} />
