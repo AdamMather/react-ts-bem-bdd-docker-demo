@@ -2,6 +2,13 @@ name: CI
 
 on:
   push:
+    branches:
+      - main
+      - devdb-migration-script
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - '.github/workflows/ci.yml'
   pull_request:
 
 jobs:
