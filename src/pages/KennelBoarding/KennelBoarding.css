@@ -1,0 +1,282 @@
+.boarding-page {
+  min-height: 100vh;
+  padding: 1.25rem;
+  background: linear-gradient(180deg, #f7fafc 0%, #eef4ff 100%);
+  color: #1f2937;
+}
+
+.boarding-page__header,
+.boarding-page__panel {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.boarding-page__header {
+  margin-bottom: 1rem;
+}
+
+.boarding-page__eyebrow {
+  margin: 0 0 0.5rem;
+  color: #1d4ed8;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.8rem;
+}
+
+.boarding-page__title {
+  margin: 0;
+  font-size: clamp(2rem, 5vw, 3rem);
+}
+
+.boarding-page__intro {
+  max-width: 52rem;
+  margin: 0.75rem 0 0;
+  color: #475569;
+}
+
+.boarding-page__banner {
+  max-width: 1200px;
+  margin: 0 auto 1rem;
+  padding: 0.875rem 1rem;
+  border-radius: 0.75rem;
+  background: #14532d;
+  color: #fff;
+  font-weight: 600;
+}
+
+.boarding-page__panel {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid #dbe4f0;
+  border-radius: 1rem;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+  padding: 1rem;
+}
+
+.boarding-page .action-bar {
+  margin-bottom: 1rem;
+}
+
+.boarding-page .action-bar__button {
+  min-height: 44px;
+}
+
+.boarding-page .list-view__search {
+  min-height: 44px;
+  width: 100%;
+  max-width: 22rem;
+}
+
+.boarding-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.boarding-form__header {
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.boarding-form__title {
+  margin: 0 0 0.25rem;
+  font-size: 1.5rem;
+}
+
+.boarding-form__progress {
+  margin: 0;
+  color: #475569;
+  font-weight: 600;
+}
+
+.boarding-form__steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.boarding-form__step {
+  min-height: 44px;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.85rem;
+  background: #fff;
+  color: #334155;
+}
+
+.boarding-form__step span {
+  display: inline-flex;
+  width: 1.8rem;
+  height: 1.8rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #e2e8f0;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.boarding-form__step--active {
+  border-color: #2563eb;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.boarding-form__step--active span {
+  background: #2563eb;
+  color: #fff;
+}
+
+.boarding-form__section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid #dbe4f0;
+  border-radius: 1rem;
+  margin: 0;
+}
+
+.boarding-form__section legend {
+  padding: 0 0.5rem;
+  font-weight: 700;
+}
+
+.boarding-form__field,
+.boarding-form__toggle,
+.boarding-form__choice-group {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.boarding-form__field span,
+.boarding-form__choice-group legend {
+  font-weight: 600;
+}
+
+.boarding-form__field input,
+.boarding-form__field textarea,
+.boarding-form__field select,
+.boarding-form .autocomplete-textbox__input {
+  min-height: 44px;
+  padding: 0.75rem 0.875rem;
+  border: 1px solid #94a3b8;
+  border-radius: 0.75rem;
+  background: #fff;
+  color: #0f172a;
+}
+
+.boarding-form__field textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.boarding-form__field--full,
+.boarding-form__choice-group {
+  grid-column: 1 / -1;
+}
+
+.boarding-form__toggle {
+  align-content: start;
+  padding-top: 1.8rem;
+}
+
+.boarding-form__toggle input,
+.boarding-form__choice input {
+  width: 1rem;
+  height: 1rem;
+}
+
+.boarding-form__toggle span,
+.boarding-form__choice span {
+  font-weight: 500;
+}
+
+.boarding-form__choice-list,
+.boarding-form__checkbox-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+}
+
+.boarding-form__choice {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0.25rem 0;
+}
+
+.boarding-form__error {
+  padding: 0.875rem 1rem;
+  border-radius: 0.75rem;
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+  font-weight: 600;
+}
+
+.boarding-form__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.boarding-form__footer-actions,
+.boarding-form__header-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.boarding-form__primary-button,
+.boarding-form__secondary-button {
+  min-height: 44px;
+  padding: 0.8rem 1.2rem;
+  border-radius: 0.85rem;
+  font-weight: 600;
+}
+
+.boarding-form__primary-button {
+  background: #2563eb;
+  color: #fff;
+}
+
+.boarding-form__secondary-button {
+  background: #fff;
+  border: 1px solid #94a3b8;
+  color: #334155;
+}
+
+.boarding-form input:focus-visible,
+.boarding-form textarea:focus-visible,
+.boarding-form select:focus-visible,
+.boarding-form button:focus-visible {
+  outline: 3px solid #1d4ed8;
+  outline-offset: 2px;
+}
+
+@media (max-width: 720px) {
+  .boarding-form__header,
+  .boarding-form__footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .boarding-form__footer-actions,
+  .boarding-form__header-actions {
+    width: 100%;
+  }
+
+  .boarding-form__primary-button,
+  .boarding-form__secondary-button {
+    width: 100%;
+  }
+}

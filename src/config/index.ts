@@ -4,7 +4,12 @@ const api = {
     contacts: '/api/contacts',
     contactNames: '/api/contact/names',
     contactAddress: '/api/contact/address',
-    vehicles: '/api/vehicles'
+    vehicles: '/api/vehicles',
+    boardingOwners: '/api/boarding/owners',
+    boardingSpecies: '/api/boarding/lookups/species',
+    boardingBreeds: '/api/boarding/lookups/breeds',
+    boardingVets: '/api/boarding/lookups/vets',
+    boardingInsuranceProviders: '/api/boarding/lookups/insurance-providers'
 };
 
 const autocomplete = {
@@ -17,7 +22,9 @@ const nav = {
     vehicleList: 'nav_vehicle_list',
     contacts: 'nav_contacts',
     address: 'nav_address',
-    vehicles: 'nav_vehicles'
+    vehicles: 'nav_vehicles',
+    boardingList: 'nav_boarding_list',
+    boardingDetail: 'nav_boarding_detail'
 }
 
 const config = {
@@ -25,6 +32,11 @@ const config = {
     apiContactNames: apiBaseUrl + api.contactNames,
     apiAddress: apiBaseUrl + api.contactAddress,
     apiVehicles: apiBaseUrl + api.vehicles,
+    apiBoardingOwners: apiBaseUrl + api.boardingOwners,
+    apiBoardingSpecies: apiBaseUrl + api.boardingSpecies,
+    apiBoardingBreeds: apiBaseUrl + api.boardingBreeds,
+    apiBoardingVets: apiBaseUrl + api.boardingVets,
+    apiBoardingInsuranceProviders: apiBaseUrl + api.boardingInsuranceProviders,
     //
     utilsVehicleMake: apiBaseUrl + autocomplete.vehicleMake,
     utilsVehicleModel: apiBaseUrl + autocomplete.vehicleModel,
@@ -33,7 +45,9 @@ const config = {
     navVehicleList: nav.vehicleList,
     navContacts: nav.contacts,
     navAddress: nav.address,
-    navVehicles: nav.vehicles
+    navVehicles: nav.vehicles,
+    navBoardingList: nav.boardingList,
+    navBoardingDetail: nav.boardingDetail
 }
 
 export default config;

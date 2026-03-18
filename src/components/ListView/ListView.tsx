@@ -1,13 +1,13 @@
 // src/components/ListView/ListView.tsx
 import React, { useState, useEffect } from 'react';
-import { Contact, Vehicle } from '../../types';
+import { BoardingOwnerRecord, Contact, Vehicle } from '../../types';
 import apiClient from '../../services/apiClient';
 import ListViewSearch from '../organisms/ListViewSearch';
 import './ListView.css';
 
 interface ListViewProps {
   onSelected: (id: number) => void;
-  onEdit: (record: Contact | Vehicle) => void;
+  onEdit: (record: Contact | Vehicle | BoardingOwnerRecord | Record<string, unknown>) => void;
   fields: string[];
   selectedIds: number[];
   apiUrl: string;
@@ -15,7 +15,7 @@ interface ListViewProps {
 
 const ListView: React.FC<ListViewProps> = ({ onSelected, onEdit, fields, selectedIds, apiUrl }) => {
   const [attributes, setAttributes] = useState<string[]>();
-  const [list, setList] = useState<Contact[] | Vehicle[]>([]);
+  const [list, setList] = useState<Array<Contact | Vehicle | BoardingOwnerRecord | Record<string, unknown>>>([]);
   const [search, setSearch] = useState('');
 
   useEffect(() => {
@@ -58,6 +58,10 @@ const ListView: React.FC<ListViewProps> = ({ onSelected, onEdit, fields, selecte
       return Number.isNaN(value.getTime()) ? '' : value.toISOString().slice(0, 10);
     }
 
+    if (Array.isArray(value)) {
+      return value.join(', ');
+    }
+
     if (typeof value === 'string' || typeof value === 'number') {
       return String(value);
     }
@@ -86,6 +90,13 @@ const ListView: React.FC<ListViewProps> = ({ onSelected, onEdit, fields, selecte
         </thead>
         <tbody>
   {filteredList.map((record) => {
+    const rowLabel = fields
+      .map((field) => record[field])
+      .filter((value) => typeof value === 'string' || typeof value === 'number')
+      .slice(0, 2)
+      .join(' ')
+      .trim() || `record ${record.id}`;
+
     return (
       <tr key={record.id} data-testid={`list-row-${record.id}`}>
         <td className="list-view__select-col">
@@ -93,13 +104,13 @@ const ListView: React.FC<ListViewProps> = ({ onSelected, onEdit, fields, selecte
             type="checkbox"
             checked={selectedIds.includes(record.id)}
             onChange={() => onSelected(record.id)}
-            aria-label={`Select ${record[fields[1]]} ${record[fields[2]]}`}
+            aria-label={`Select ${rowLabel}`}
             data-testid={`select-row-${record.id}`}
           />
         </td>
-        <td>{renderCellValue(record[fields[0]])}</td>
-        <td>{renderCellValue(record[fields[1]])}</td>
-        <td>{renderCellValue(record[fields[2]])}</td>
+        {fields.map((field) => (
+          <td key={field}>{renderCellValue(record[field])}</td>
+        ))}
         <td className="list-view__actions-col">
           <button
             className="list-view__link-button"

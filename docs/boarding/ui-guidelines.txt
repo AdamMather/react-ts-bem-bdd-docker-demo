@@ -1,0 +1,269 @@
+Designing mobile-first forms means optimizing the experience for small screens, touch input, and variable network conditions before scaling up to larger screens. When aligned with Web Content Accessibility Guidelines (WCAG) 2.2 AA, forms should also be perceivable, operable, understandable, and robust for users with disabilities.
+
+Below is a structured summary of best-practice recommendations combining mobile UX and WCAG 2.2 AA accessibility principles.
+
+1. Keep Forms Short and Focused
+
+Mobile principle: Reduce cognitive load and scrolling.
+
+Best practices
+
+Ask only essential information.
+
+Break longer forms into logical steps or sections (multi-step forms).
+
+Use progress indicators when forms span multiple screens.
+
+Avoid unnecessary fields such as optional demographics.
+
+Accessibility considerations
+
+Clearly announce progress (for screen readers).
+
+Ensure step indicators have accessible labels (e.g., “Step 2 of 4”).
+
+2. Use Clear Labels and Instructions
+
+Mobile principle: Small screens make ambiguity worse.
+
+Best practices
+
+Place labels above fields, not beside them.
+
+Use persistent labels, not placeholder-only text.
+
+Provide short instructions where needed.
+
+Accessibility considerations
+
+Every input must have an associated <label> element.
+
+Avoid relying on placeholders as the only label.
+
+Use ARIA descriptions for additional guidance.
+
+Example:
+
+<label for="email">Email address</label>
+<input id="email" name="email" type="email" aria-describedby="emailHint">
+<p id="emailHint">We’ll only use this to contact you.</p>
+3. Optimize Touch Targets
+
+Mobile principle: Fingers are imprecise.
+
+Best practices
+
+Minimum 44 × 44 px touch targets.
+
+Adequate spacing between controls.
+
+Use full-width inputs and buttons.
+
+Accessibility considerations
+WCAG 2.2 introduces Target Size (Minimum).
+
+Users with:
+
+motor impairments
+
+tremors
+
+low dexterity
+
+benefit from larger interactive controls.
+
+4. Use the Correct Input Types
+
+Mobile principle: Trigger appropriate keyboards.
+
+Examples:
+
+Field	Input type
+Email	type="email"
+Phone	type="tel"
+Date	type="date"
+Number	type="number"
+
+Benefits:
+
+Faster input
+
+Fewer errors
+
+Accessibility considerations
+
+Avoid custom widgets unless they are fully keyboard and screen-reader accessible.
+
+Native inputs are typically more accessible.
+
+5. Support Autofill and Input Assistance
+
+Mobile principle: Typing on mobile is slow.
+
+Best practices:
+
+Enable autocomplete attributes
+
+Allow browser autofill
+
+Avoid blocking paste.
+
+Example:
+
+<input type="text" name="name" autocomplete="name">
+<input type="email" name="email" autocomplete="email">
+
+Accessibility considerations
+WCAG requires identifying input purpose so assistive tech can help users complete forms.
+
+6. Provide Real-Time Validation
+
+Mobile principle: Users should know errors immediately.
+
+Best practices:
+
+Validate as users type or leave a field.
+
+Highlight problematic fields clearly.
+
+Preserve user input when errors occur.
+
+Accessibility considerations
+Error messages must:
+
+Be programmatically associated with the field.
+
+Be announced to screen readers.
+
+Example pattern:
+
+<input aria-invalid="true" aria-describedby="emailError">
+<span id="emailError">Enter a valid email address</span>
+7. Clear and Accessible Error Handling
+
+Users should easily understand what went wrong.
+
+Best practices:
+
+Display error summary at the top.
+
+Also show inline errors near fields.
+
+Use plain language.
+
+Accessibility:
+
+Focus should move to the error summary.
+
+Use ARIA live regions so screen readers announce errors.
+
+8. Ensure Adequate Color Contrast
+
+Mobile screens may be used outdoors or by low-vision users.
+
+WCAG AA requires:
+
+4.5:1 contrast ratio for normal text
+
+3:1 for large text
+
+Visible focus indicators
+
+Avoid:
+
+Color-only error indicators.
+
+Good pattern:
+
+Red border + error icon + error message
+9. Maintain Logical Navigation and Focus
+
+Mobile users may still rely on keyboards or assistive technology.
+
+Best practices:
+
+Maintain logical tab order
+
+Visible focus states
+
+Do not trap focus inside components.
+
+Accessibility:
+
+Screen reader users should be able to move through the form logically.
+
+10. Reduce User Effort
+
+Mobile-first forms should minimize typing.
+
+Best practices:
+
+Use radio buttons or select lists instead of free text where possible.
+
+Pre-fill known values.
+
+Enable “Next” navigation between fields.
+
+Accessibility:
+
+Group related inputs with <fieldset> and <legend>.
+
+Example:
+
+<fieldset>
+  <legend>Preferred contact method</legend>
+  <label><input type="radio" name="contact" value="email"> Email</label>
+  <label><input type="radio" name="contact" value="phone"> Phone</label>
+</fieldset>
+11. Provide Accessible Feedback and Confirmation
+
+After submission:
+
+Best practices:
+
+Show confirmation message
+
+Provide next steps
+
+Accessibility:
+
+Use ARIA live regions to announce success messages.
+
+12. Design for Orientation and Zoom
+
+Mobile accessibility requires flexibility.
+
+WCAG requirements include:
+
+Support 200% zoom
+
+Avoid locking screen orientation
+
+Prevent horizontal scrolling where possible.
+
+Example Accessible Mobile Form Structure
+
+Typical accessible order:
+
+Heading
+Short instructions
+Form field
+Inline help
+Next field
+Error summary (if needed)
+Submit button
+Confirmation message
+Quick Best-Practice Checklist
+
+Mobile-first WCAG 2.2 AA forms should:
+
+✔ Labels above inputs
+✔ Minimum 44px touch targets
+✔ Native input types
+✔ Clear inline validation
+✔ Error summaries + inline messages
+✔ Proper label associations
+✔ Accessible grouping (fieldset)
+✔ Color contrast ≥ 4.5:1
+✔ Logical tab order
+✔ Autofill support
