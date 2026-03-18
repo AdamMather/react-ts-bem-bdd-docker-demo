@@ -11,6 +11,8 @@ import java.util.HashMap
 import scala.util.Using
 
 object VehicleModelService {
+  private val SqlIdentifierPattern = "^[A-Za-z_][A-Za-z0-9_]*$".r
+
   private def requireEnv(name: String): String = {
     val value = Option(System.getenv(name)).map(_.trim).getOrElse("")
     if (value.isEmpty) {
@@ -35,6 +37,19 @@ object VehicleModelService {
   private val dbConnectionString =
     Option(System.getenv("VEHICLE_MODEL_DB_CONNECTION")).filter(_.trim.nonEmpty).getOrElse(buildConnectionStringFromEnv())
 
+  private def requireSqlIdentifier(value: String, description: String): String =
+    SqlIdentifierPattern.findFirstIn(value).getOrElse {
+      throw new IllegalArgumentException(s"Invalid SQL identifier for $description: $value")
+    }
+
+  private def buildSuggestionSql(selectColumnName: String, tableName: String, whereColumnName: String): String = {
+    val validatedSelectColumnName = requireSqlIdentifier(selectColumnName, "select column")
+    val validatedTableName = requireSqlIdentifier(tableName, "table")
+    val validatedWhereColumnName = requireSqlIdentifier(whereColumnName, "where column")
+
+    s"SELECT DISTINCT $validatedSelectColumnName FROM $validatedTableName WHERE $validatedWhereColumnName ILIKE ? LIMIT 10"
+  }
+
   @main def runService(): Unit = {
     val host = Option(System.getenv("VEHICLE_MODEL_SERVICE_HOST")).filter(_.trim.nonEmpty).getOrElse("127.0.0.1")
     val port = Option(System.getenv("VEHICLE_MODEL_SERVICE_PORT")).flatMap(v => scala.util.Try(v.toInt).toOption).getOrElse(5056)
@@ -49,7 +64,10 @@ object VehicleModelService {
         response.put("suggestions", new ArrayList[HashMap[String, String]]())
         ctx.json(response)
       } else {
-        val sql = "SELECT DISTINCT name FROM vehiclemodel WHERE name ILIKE ? LIMIT 10"
+        val suggestionColumnName = "name"
+        val tableName = "vehiclemodel"
+        val whereColumnName = "name"
+        val sql = buildSuggestionSql(suggestionColumnName, tableName, whereColumnName)
 
         val suggestionsResult =
           Using.resource(DriverManager.getConnection(dbConnectionString)) { connection =>
@@ -60,7 +78,7 @@ object VehicleModelService {
                 val rows = new ArrayList[HashMap[String, String]]()
                 while (resultSet.next()) {
                   val row = new HashMap[String, String]()
-                  row.put("name", resultSet.getString("name"))
+                  row.put(suggestionColumnName, resultSet.getString(suggestionColumnName))
                   rows.add(row)
                 }
                 rows
