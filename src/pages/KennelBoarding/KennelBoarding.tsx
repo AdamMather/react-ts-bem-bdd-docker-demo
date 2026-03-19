@@ -21,6 +21,8 @@ const steps = [
   { id: 'routine', label: 'Feeding & Routine' },
   { id: 'booking', label: 'Booking & Consent' },
 ];
+const reviewStep = { id: 'review', label: 'Confirmation' };
+const journeySteps = [...steps, reviewStep];
 
 const createEmptyRecord = (): BoardingOwnerRecord => ({
   id: 0,
@@ -215,6 +217,7 @@ interface BoardingDetailFormProps {
 const BoardingDetailForm: React.FC<BoardingDetailFormProps> = ({ initialRecord, onSave, onCancel }) => {
   const [record, setRecord] = useState<BoardingOwnerRecord>(initialRecord);
   const [currentStep, setCurrentStep] = useState(0);
+  const [isReviewing, setIsReviewing] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const {
@@ -227,10 +230,16 @@ const BoardingDetailForm: React.FC<BoardingDetailFormProps> = ({ initialRecord, 
   useEffect(() => {
     setRecord(initialRecord);
     setCurrentStep(0);
+    setIsReviewing(false);
     setErrorMessage('');
   }, [initialRecord]);
 
-  const progressLabel = useMemo(() => `Step ${currentStep + 1} of ${steps.length}: ${steps[currentStep].label}`, [currentStep]);
+  const currentJourneyIndex = isReviewing ? journeySteps.length - 1 : currentStep;
+  const progressPercent = ((currentJourneyIndex + 1) / journeySteps.length) * 100;
+  const progressLabel = useMemo(
+    () => `Step ${currentJourneyIndex + 1} of ${journeySteps.length}: ${journeySteps[currentJourneyIndex].label}`,
+    [currentJourneyIndex]
+  );
 
   const updateField = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -254,31 +263,64 @@ const BoardingDetailForm: React.FC<BoardingDetailFormProps> = ({ initialRecord, 
     });
   };
 
-  const validate = () => {
-    if (!record.full_name.trim()) return 'Owner full name is required.';
-    if (!record.phone.trim()) return 'Owner phone number is required.';
-    if (!record.email.trim()) return 'Owner email address is required.';
-    if (!record.emergency_contact_name.trim()) return 'Emergency contact name is required.';
-    if (!record.emergency_contact_phone.trim()) return 'Emergency contact phone is required.';
-    if (!record.pet_name.trim()) return 'Pet name is required.';
-    if (!record.species.trim()) return 'Species is required.';
-    if (!record.breed.trim()) return 'Breed is required.';
-    if (!record.vet_practice_name.trim()) return 'Vet practice name is required.';
-    if (!record.vet_phone.trim()) return 'Vet phone number is required.';
-    if (!record.arrival_date || !record.departure_date) return 'Arrival and departure dates are required.';
-    if (!record.signature.trim()) return 'Signature is required before saving.';
-    if (!record.agrees_terms || !record.info_accurate_agreement || !record.privacy_consent) {
-      return 'Please confirm the declaration and privacy consent.';
+  const validateStep = (stepId: string) => {
+    if (stepId === 'owner') {
+      if (!record.full_name.trim()) return 'Owner Details: full name is required.';
+      if (!record.phone.trim()) return 'Owner Details: phone number is required.';
+    }
+
+    if (stepId === 'pet' && !record.pet_name.trim()) {
+      return 'Pet Details: pet name is required.';
+    }
+
+    if (stepId === 'vet' && !record.vet_practice_name.trim()) {
+      return 'Veterinary: vet practice name is required.';
+    }
+
+    if (stepId === 'routine' && !record.food_type.trim()) {
+      return 'Feeding & Routine: food type is required.';
+    }
+
+    if (stepId === 'booking') {
+      if (!record.arrival_date) return 'Booking & Consent: arrival date is required.';
+      if (!record.departure_date) return 'Booking & Consent: departure date is required.';
+      if (!record.dropoff_time) return 'Booking & Consent: drop-off time is required.';
+      if (!record.collection_time) return 'Booking & Consent: collection time is required.';
+      if (!record.signature.trim()) return 'Booking & Consent: signature is required.';
     }
 
     return '';
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const message = validate();
+  const handleNext = () => {
+    const message = validateStep(steps[currentStep].id);
     if (message) {
       setErrorMessage(message);
+      return;
+    }
+
+    setErrorMessage('');
+    if (currentStep === steps.length - 1) {
+      setIsReviewing(true);
+      return;
+    }
+
+    setCurrentStep((step) => Math.min(step + 1, steps.length - 1));
+  };
+
+  const handleConfirm = async () => {
+    const message = validateStep('booking');
+    if (message) {
+      setIsReviewing(false);
+      setCurrentStep(steps.length - 1);
+      setErrorMessage(message);
+      return;
+    }
+
+    if (!record.agrees_terms || !record.info_accurate_agreement || !record.privacy_consent) {
+      setIsReviewing(false);
+      setCurrentStep(steps.length - 1);
+      setErrorMessage('Booking & Consent: please confirm the declaration and privacy consent.');
       return;
     }
 
@@ -288,6 +330,17 @@ const BoardingDetailForm: React.FC<BoardingDetailFormProps> = ({ initialRecord, 
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (isReviewing) {
+      await handleConfirm();
+      return;
+    }
+
+    handleNext();
   };
 
   return (
@@ -306,30 +359,24 @@ const BoardingDetailForm: React.FC<BoardingDetailFormProps> = ({ initialRecord, 
         </div>
       </div>
 
-      <div className="boarding-form__steps" role="tablist" aria-label="Boarding form steps">
-        {steps.map((step, index) => (
-          <button
-            key={step.id}
-            type="button"
-            role="tab"
-            aria-selected={index === currentStep}
-            className={`boarding-form__step ${index === currentStep ? 'boarding-form__step--active' : ''}`}
-            onClick={() => setCurrentStep(index)}
-          >
-            <span>{index + 1}</span>
-            {step.label}
-          </button>
-        ))}
+      <div className="boarding-form__progressbar" aria-label="Boarding form progress">
+        <div className="boarding-form__progressbar-track" aria-hidden="true">
+          <div className="boarding-form__progressbar-fill" style={{ width: `${progressPercent}%` }} />
+        </div>
+        <div className="boarding-form__progressbar-meta">
+          <span>{journeySteps[currentJourneyIndex].label}</span>
+          <span>{Math.round(progressPercent)}%</span>
+        </div>
       </div>
 
-      <form className="boarding-form" onSubmit={handleSubmit} noValidate>
-        {currentStep === 0 ? (
+      <form className="boarding-form" onSubmit={handleFormSubmit} noValidate>
+        {!isReviewing && currentStep === 0 ? (
           <fieldset className="boarding-form__section">
             <legend>Owner and emergency contact</legend>
-            <TextField label="Full name" name="full_name" value={record.full_name} onChange={updateField} autoComplete="name" required />
+            <TextField label="Full name" name="full_name" value={record.full_name} onChange={updateField} autoComplete="name" required ariaInvalid={errorMessage.includes('full name')} />
             <TextAreaField label="Address" name="address" value={record.address} onChange={updateField} rows={3} />
             <TextField label="Postcode" name="postcode" value={record.postcode} onChange={updateField} autoComplete="postal-code" />
-            <TextField label="Phone number" name="phone" value={record.phone} onChange={updateField} type="tel" autoComplete="tel" required />
+            <TextField label="Phone number" name="phone" value={record.phone} onChange={updateField} type="tel" autoComplete="tel" required ariaInvalid={errorMessage.includes('phone number')} />
             <TextField label="Email address" name="email" value={record.email} onChange={updateField} type="email" autoComplete="email" required />
             <RadioGroupField
               label="Preferred contact method"
@@ -359,10 +406,10 @@ const BoardingDetailForm: React.FC<BoardingDetailFormProps> = ({ initialRecord, 
           </fieldset>
         ) : null}
 
-        {currentStep === 1 ? (
+        {!isReviewing && currentStep === 1 ? (
           <fieldset className="boarding-form__section">
             <legend>Pet identification</legend>
-            <TextField label="Pet name" name="pet_name" value={record.pet_name} onChange={updateField} required />
+            <TextField label="Pet name" name="pet_name" value={record.pet_name} onChange={updateField} required ariaInvalid={errorMessage.includes('pet name')} />
             <AutoCompleteTextbox id="species" name="species" label="Species" value={record.species} onChange={updateField} ariaLabel="Pet species" placeholder="Start typing species" apiUrl={apiBoardingSpecies} />
             <AutoCompleteTextbox id="breed" name="breed" label="Breed" value={record.breed} onChange={updateField} ariaLabel="Pet breed" placeholder="Start typing breed" apiUrl={apiBoardingBreeds} />
             <TextField label="Date of birth / age" name="date_of_birth" value={record.date_of_birth} onChange={updateField} type="date" />
@@ -384,7 +431,7 @@ const BoardingDetailForm: React.FC<BoardingDetailFormProps> = ({ initialRecord, 
           </fieldset>
         ) : null}
 
-        {currentStep === 2 ? (
+        {!isReviewing && currentStep === 2 ? (
           <fieldset className="boarding-form__section">
             <legend>Veterinary information</legend>
             <AutoCompleteTextbox id="vet_practice_name" name="vet_practice_name" label="Vet practice name" value={record.vet_practice_name} onChange={updateField} ariaLabel="Vet practice name" placeholder="Start typing vet practice" apiUrl={apiBoardingVets} />
@@ -394,7 +441,7 @@ const BoardingDetailForm: React.FC<BoardingDetailFormProps> = ({ initialRecord, 
           </fieldset>
         ) : null}
 
-        {currentStep === 3 ? (
+        {!isReviewing && currentStep === 3 ? (
           <fieldset className="boarding-form__section">
             <legend>Pet insurance</legend>
             <AutoCompleteTextbox id="insurance_provider_name" name="insurance_provider_name" label="Insurance provider name" value={record.insurance_provider_name} onChange={updateField} ariaLabel="Insurance provider name" placeholder="Start typing insurer" apiUrl={apiBoardingInsuranceProviders} />
@@ -407,7 +454,7 @@ const BoardingDetailForm: React.FC<BoardingDetailFormProps> = ({ initialRecord, 
           </fieldset>
         ) : null}
 
-        {currentStep === 4 ? (
+        {!isReviewing && currentStep === 4 ? (
           <fieldset className="boarding-form__section">
             <legend>Vaccination record</legend>
             <CheckboxListField
@@ -421,7 +468,7 @@ const BoardingDetailForm: React.FC<BoardingDetailFormProps> = ({ initialRecord, 
           </fieldset>
         ) : null}
 
-        {currentStep === 5 ? (
+        {!isReviewing && currentStep === 5 ? (
           <fieldset className="boarding-form__section">
             <legend>Health and medication</legend>
             <TextAreaField label="Current health conditions" name="health_conditions" value={record.health_conditions} onChange={updateField} rows={3} />
@@ -436,7 +483,7 @@ const BoardingDetailForm: React.FC<BoardingDetailFormProps> = ({ initialRecord, 
           </fieldset>
         ) : null}
 
-        {currentStep === 6 ? (
+        {!isReviewing && currentStep === 6 ? (
           <fieldset className="boarding-form__section">
             <legend>Behaviour and temperament</legend>
             <RadioGroupField
@@ -462,11 +509,11 @@ const BoardingDetailForm: React.FC<BoardingDetailFormProps> = ({ initialRecord, 
           </fieldset>
         ) : null}
 
-        {currentStep === 7 ? (
+        {!isReviewing && currentStep === 7 ? (
           <fieldset className="boarding-form__section">
             <legend>Feeding and routine</legend>
             <ToggleField label="Food provided by owner" name="food_provided_by_owner" checked={record.food_provided_by_owner} onChange={updateField} />
-            <TextField label="Food type" name="food_type" value={record.food_type} onChange={updateField} />
+            <TextField label="Food type" name="food_type" value={record.food_type} onChange={updateField} ariaInvalid={errorMessage.includes('food type')} />
             <TextField label="Feeding times" name="feeding_times" value={record.feeding_times} onChange={updateField} placeholder="e.g. 07:30, 17:30" />
             <TextField label="Portion size" name="portion_size" value={record.portion_size} onChange={updateField} />
             <ToggleField label="Treats allowed" name="treats_allowed" checked={record.treats_allowed} onChange={updateField} />
@@ -474,13 +521,13 @@ const BoardingDetailForm: React.FC<BoardingDetailFormProps> = ({ initialRecord, 
           </fieldset>
         ) : null}
 
-        {currentStep === 8 ? (
+        {!isReviewing && currentStep === 8 ? (
           <fieldset className="boarding-form__section">
             <legend>Booking and declaration</legend>
-            <TextField label="Arrival date" name="arrival_date" value={record.arrival_date} onChange={updateField} type="date" />
-            <TextField label="Departure date" name="departure_date" value={record.departure_date} onChange={updateField} type="date" />
-            <TextField label="Drop-off time" name="dropoff_time" value={record.dropoff_time} onChange={updateField} type="time" />
-            <TextField label="Collection time" name="collection_time" value={record.collection_time} onChange={updateField} type="time" />
+            <TextField label="Arrival date" name="arrival_date" value={record.arrival_date} onChange={updateField} type="date" ariaInvalid={errorMessage.includes('arrival date')} />
+            <TextField label="Departure date" name="departure_date" value={record.departure_date} onChange={updateField} type="date" ariaInvalid={errorMessage.includes('departure date')} />
+            <TextField label="Drop-off time" name="dropoff_time" value={record.dropoff_time} onChange={updateField} type="time" ariaInvalid={errorMessage.includes('drop-off time')} />
+            <TextField label="Collection time" name="collection_time" value={record.collection_time} onChange={updateField} type="time" ariaInvalid={errorMessage.includes('collection time')} />
             <ToggleField label="Include grooming" name="grooming" checked={record.grooming} onChange={updateField} />
             <ToggleField label="Additional exercise" name="additional_exercise" checked={record.additional_exercise} onChange={updateField} />
             <ToggleField label="Training session" name="training_session" checked={record.training_session} onChange={updateField} />
@@ -521,9 +568,54 @@ const BoardingDetailForm: React.FC<BoardingDetailFormProps> = ({ initialRecord, 
                 }))
               }
             />
-            <TextField label="Signature" name="signature" value={record.signature} onChange={updateField} required />
+            <TextField label="Signature" name="signature" value={record.signature} onChange={updateField} required ariaInvalid={errorMessage.includes('signature')} />
             <TextField label="Signed date" name="signed_date" value={record.signed_date} onChange={updateField} type="date" />
           </fieldset>
+        ) : null}
+
+        {isReviewing ? (
+          <section className="boarding-form__review">
+            <ReviewSection title="Owner Details" onEdit={() => { setIsReviewing(false); setCurrentStep(0); }}>
+              <p><strong>Owner:</strong> {record.full_name || '—'}</p>
+              <p><strong>Phone:</strong> {record.phone || '—'}</p>
+              <p><strong>Email:</strong> {record.email || '—'}</p>
+              <p><strong>Emergency contact:</strong> {record.emergency_contact_name || '—'}</p>
+            </ReviewSection>
+            <ReviewSection title="Pet Details" onEdit={() => { setIsReviewing(false); setCurrentStep(1); }}>
+              <p><strong>Pet:</strong> {record.pet_name || '—'}</p>
+              <p><strong>Species / breed:</strong> {[record.species, record.breed].filter(Boolean).join(' / ') || '—'}</p>
+              <p><strong>Microchip:</strong> {record.microchip_number || '—'}</p>
+            </ReviewSection>
+            <ReviewSection title="Veterinary" onEdit={() => { setIsReviewing(false); setCurrentStep(2); }}>
+              <p><strong>Practice:</strong> {record.vet_practice_name || '—'}</p>
+              <p><strong>Phone:</strong> {record.vet_phone || '—'}</p>
+            </ReviewSection>
+            <ReviewSection title="Insurance" onEdit={() => { setIsReviewing(false); setCurrentStep(3); }}>
+              <p><strong>Provider:</strong> {record.insurance_provider_name || '—'}</p>
+              <p><strong>Policy number:</strong> {record.policy_number || '—'}</p>
+            </ReviewSection>
+            <ReviewSection title="Vaccinations" onEdit={() => { setIsReviewing(false); setCurrentStep(4); }}>
+              <p><strong>Confirmed:</strong> {record.vaccinations.join(', ') || '—'}</p>
+              <p><strong>Next due:</strong> {record.vaccination_next_due_date || '—'}</p>
+            </ReviewSection>
+            <ReviewSection title="Health & Medication" onEdit={() => { setIsReviewing(false); setCurrentStep(5); }}>
+              <p><strong>Conditions:</strong> {record.health_conditions || '—'}</p>
+              <p><strong>Medication:</strong> {record.medication_required ? `${record.medication_name || 'Required'}` : 'No'}</p>
+            </ReviewSection>
+            <ReviewSection title="Behaviour" onEdit={() => { setIsReviewing(false); setCurrentStep(6); }}>
+              <p><strong>Mix with other dogs:</strong> {record.mix_with_other_dogs}</p>
+              <p><strong>Triggers:</strong> {record.triggers || '—'}</p>
+            </ReviewSection>
+            <ReviewSection title="Feeding & Routine" onEdit={() => { setIsReviewing(false); setCurrentStep(7); }}>
+              <p><strong>Food type:</strong> {record.food_type || '—'}</p>
+              <p><strong>Feeding times:</strong> {record.feeding_times || '—'}</p>
+            </ReviewSection>
+            <ReviewSection title="Booking & Consent" onEdit={() => { setIsReviewing(false); setCurrentStep(8); }}>
+              <p><strong>Stay:</strong> {record.arrival_date || '—'} to {record.departure_date || '—'}</p>
+              <p><strong>Times:</strong> {record.dropoff_time || '—'} / {record.collection_time || '—'}</p>
+              <p><strong>Signature:</strong> {record.signature || '—'}</p>
+            </ReviewSection>
+          </section>
         ) : null}
 
         {errorMessage ? (
@@ -533,17 +625,30 @@ const BoardingDetailForm: React.FC<BoardingDetailFormProps> = ({ initialRecord, 
         ) : null}
 
         <div className="boarding-form__footer">
-          <button type="button" className="boarding-form__secondary-button" onClick={() => setCurrentStep((step) => Math.max(step - 1, 0))} disabled={!currentStep}>
+          <button
+            type="button"
+            className="boarding-form__secondary-button"
+            onClick={() => {
+              setErrorMessage('');
+              if (isReviewing) {
+                setIsReviewing(false);
+                setCurrentStep(steps.length - 1);
+                return;
+              }
+              setCurrentStep((step) => Math.max(step - 1, 0));
+            }}
+            disabled={!currentStep && !isReviewing}
+          >
             Previous
           </button>
           <div className="boarding-form__footer-actions">
-            {currentStep < steps.length - 1 ? (
-              <button type="button" className="boarding-form__primary-button" onClick={() => setCurrentStep((step) => Math.min(step + 1, steps.length - 1))}>
-                Next step
+            {isReviewing ? (
+              <button type="submit" className="boarding-form__primary-button" disabled={isSaving}>
+                {isSaving ? 'Saving...' : 'Confirm and finish'}
               </button>
             ) : (
-              <button type="submit" className="boarding-form__primary-button" disabled={isSaving}>
-                {isSaving ? 'Saving...' : 'Save enrolment'}
+              <button type="submit" className="boarding-form__primary-button">
+                {currentStep === steps.length - 1 ? 'Review details' : 'Next step'}
               </button>
             )}
           </div>
@@ -562,12 +667,13 @@ interface TextFieldProps {
   placeholder?: string;
   autoComplete?: string;
   required?: boolean;
+  ariaInvalid?: boolean;
 }
 
-const TextField: React.FC<TextFieldProps> = ({ label, name, value, onChange, type = 'text', placeholder, autoComplete, required }) => (
+const TextField: React.FC<TextFieldProps> = ({ label, name, value, onChange, type = 'text', placeholder, autoComplete, required, ariaInvalid }) => (
   <label className="boarding-form__field">
     <span>{label}</span>
-    <input name={name} type={type} value={value} onChange={onChange} placeholder={placeholder} autoComplete={autoComplete} required={required} />
+    <input name={name} type={type} value={value} onChange={onChange} placeholder={placeholder} autoComplete={autoComplete} required={required} aria-invalid={ariaInvalid} />
   </label>
 );
 
@@ -642,6 +748,24 @@ const CheckboxListField: React.FC<CheckboxListFieldProps> = ({ label, values, op
       ))}
     </div>
   </fieldset>
+);
+
+interface ReviewSectionProps {
+  title: string;
+  onEdit: () => void;
+  children: React.ReactNode;
+}
+
+const ReviewSection: React.FC<ReviewSectionProps> = ({ title, onEdit, children }) => (
+  <section className="boarding-form__review-card">
+    <div className="boarding-form__review-header">
+      <h3>{title}</h3>
+      <button type="button" className="boarding-form__link-button" onClick={onEdit}>
+        Edit
+      </button>
+    </div>
+    <div className="boarding-form__review-body">{children}</div>
+  </section>
 );
 
 export default KennelBoarding;
