@@ -1,5 +1,6 @@
 const { test, expect } = require('@playwright/test');
 const AxeBuilder = require('@axe-core/playwright').default;
+const KennelBoardingPage = require('../page_objects/KennelBoardingPage');
 
 test.describe('Accessibility', () => {
   test('home and contact form have no critical or serious a11y violations', async ({ page }) => {
@@ -18,10 +19,11 @@ test.describe('Accessibility', () => {
   });
 
   test('kennel boarding list and enrolment form have no critical or serious a11y violations', async ({ page }) => {
-    await page.goto('/kennel-boarding');
-    await expect(page.getByRole('heading', { name: /pet enrolment administration/i })).toBeVisible();
+    const kennelBoardingPage = new KennelBoardingPage(page);
+    await kennelBoardingPage.goto();
+    await kennelBoardingPage.expectHeadingVisible();
 
-    await page.getByRole('button', { name: /add new owner/i }).click();
+    await kennelBoardingPage.addOwnerButton.click();
     await expect(page.getByRole('heading', { name: /create pet owner enrolment/i })).toBeVisible();
 
     const accessibilityScanResults = await new AxeBuilder({ page }).analyze();

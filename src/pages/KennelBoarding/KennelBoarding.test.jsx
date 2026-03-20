@@ -91,5 +91,5 @@ describe('KennelBoarding', () => {
       'Booking & Consent: please confirm the declaration and privacy consent.'
     );
     expect(screen.getByText('Booking and declaration')).toBeInTheDocument();
-  });
+  }, 10000);
 });

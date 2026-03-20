@@ -1,85 +1,210 @@
-const assert = require('node:assert/strict');
+const { expect } = require('@playwright/test');
 
 class KennelBoardingPage {
-  constructor(page) {
+  constructor(page, baseUrl = 'http://127.0.0.1:3000') {
     this.page = page;
-    this.baseUrl = 'http://127.0.0.1:3000/kennel-boarding';
-    this.fieldSelectors = {
-      'Full name': 'input[name="full_name"]',
-      'Phone number': 'input[name="phone"]',
-      'Pet name': 'input[name="pet_name"]',
-      'Vet practice name': 'input[name="vet_practice_name"]',
-      'Food type': 'input[name="food_type"]',
-      'Arrival date': 'input[name="arrival_date"]',
-      'Departure date': 'input[name="departure_date"]',
-      'Drop-off time': 'input[name="dropoff_time"]',
-      'Collection time': 'input[name="collection_time"]',
-      Signature: 'input[name="signature"]',
-    };
+    this.baseUrl = baseUrl;
+    this.path = '/kennel-boarding';
+  }
+
+  get heading() {
+    return this.page.getByRole('heading', { name: /pet enrolment administration/i });
+  }
+
+  get addOwnerButton() {
+    return this.page.getByRole('button', { name: /add new owner/i });
+  }
+
+  get searchField() {
+    return this.page.getByTestId('list-view-search');
+  }
+
+  get resultsTable() {
+    return this.page.getByTestId('list-view-table');
+  }
+
+  get listRows() {
+    return this.page.locator('[data-testid^="list-row-"]');
+  }
+
+  get errorAlert() {
+    return this.page.getByRole('alert');
+  }
+
+  get successBanner() {
+    return this.page.getByRole('status');
+  }
+
+  get reviewSection() {
+    return this.page.locator('.boarding-form__review');
+  }
+
+  get nextStepButton() {
+    return this.page.getByRole('button', { name: /next step/i });
+  }
+
+  get reviewDetailsButton() {
+    return this.page.getByRole('button', { name: /review details/i });
+  }
+
+  get confirmButton() {
+    return this.page.getByRole('button', { name: /confirm and finish/i });
   }
 
   async goto() {
-    await this.page.goto(this.baseUrl);
+    await this.page.goto(`${this.baseUrl}${this.path}`);
   }
 
   async startNewEnrolment() {
     await this.goto();
-    await this.page.getByRole('button', { name: /add new owner/i }).click();
+    await this.addOwnerButton.click();
+    await expect(this.page.getByRole('heading', { name: /create pet owner enrolment/i })).toBeVisible();
   }
 
-  async submitCurrentStep() {
-    await this.page.getByRole('button', { name: /next step|review details/i }).click();
+  field(label) {
+    const accessibleLabels = {
+      Species: 'Pet species',
+      Breed: 'Pet breed',
+      'Full name': 'Full name',
+      'Phone number': 'Phone number',
+      'Email address': 'Email address',
+      'Pet name': 'Pet name',
+      'Vet practice name': 'Vet practice name',
+      'Food type': 'Food type',
+      'Arrival date': 'Arrival date',
+      'Departure date': 'Departure date',
+      'Drop-off time': 'Drop-off time',
+      'Collection time': 'Collection time',
+      Signature: 'Signature',
+    };
+
+    const accessibleLabel = accessibleLabels[label];
+    if (!accessibleLabel) {
+      throw new Error(`No field mapping configured for "${label}"`);
+    }
+
+    return this.page.getByLabel(accessibleLabel, { exact: true });
+  }
+
+  async fillField(label, value) {
+    await this.field(label).fill(value);
   }
 
   async enterField(label, value) {
-    const selector = this.fieldSelectors[label];
-    assert.ok(selector, `No selector configured for field "${label}"`);
-    await this.page.locator(selector).fill(value);
+    await this.fillField(label, value);
+  }
+
+  async fillAutocompleteField(label, query, suggestionTestId) {
+    const input = this.field(label);
+    await input.fill(query);
+    const firstSuggestion = this.page.getByTestId(`${suggestionTestId}-suggestion-0`);
+    await expect(firstSuggestion).toBeVisible();
+    await firstSuggestion.click();
   }
 
   async chooseAutocompleteSuggestion(inputName) {
-    const option = this.page.locator(`[data-testid="${inputName}-suggestion-0"]`);
-    if (await option.count()) {
-      await option.first().click();
+    const firstSuggestion = this.page.getByTestId(`${inputName}-suggestion-0`);
+    await expect(firstSuggestion).toBeVisible();
+    await firstSuggestion.click();
+  }
+
+  async submitCurrentStep() {
+    const button = (await this.reviewDetailsButton.isVisible().catch(() => false))
+      ? this.reviewDetailsButton
+      : this.nextStepButton;
+
+    await button.click();
+  }
+
+  async skipCurrentStep(times = 1) {
+    for (let index = 0; index < times; index += 1) {
+      await this.nextStepButton.click();
     }
   }
 
-  async completeValidJourney() {
-    await this.enterField('Full name', 'Jordan Miles');
-    await this.enterField('Phone number', '07123456789');
-    await this.page.locator('input[name="email"]').fill('jordan.miles@example.com');
-    await this.submitCurrentStep();
+  async fillOwnerDetails({
+    fullName = 'Jordan Miles',
+    phone = '07123456789',
+    email = 'jordan.miles@example.com',
+  } = {}) {
+    await this.fillField('Full name', fullName);
+    await this.fillField('Phone number', phone);
+    await this.fillField('Email address', email);
+  }
 
-    await this.enterField('Pet name', 'Biscuit');
-    await this.page.locator('input[name="species"]').fill('Dog');
-    await this.chooseAutocompleteSuggestion('species');
-    await this.page.locator('input[name="breed"]').fill('Cockapoo');
-    await this.chooseAutocompleteSuggestion('breed');
-    await this.submitCurrentStep();
+  async fillPetDetails({
+    petName = 'Biscuit',
+    speciesQuery = 'Do',
+    breedQuery = 'Cock',
+  } = {}) {
+    await this.fillField('Pet name', petName);
+    await this.fillAutocompleteField('Species', speciesQuery, 'species');
+    await expect(this.field('Species')).toHaveValue(/dog/i);
+    await this.fillAutocompleteField('Breed', breedQuery, 'breed');
+  }
 
-    await this.page.locator('input[name="vet_practice_name"]').fill('Riverside Vets');
-    await this.chooseAutocompleteSuggestion('vet_practice_name');
-    await this.submitCurrentStep();
+  async fillVetDetails({ vetPracticeName = 'River' } = {}) {
+    await this.fillAutocompleteField('Vet practice name', vetPracticeName, 'vet_practice_name');
+  }
 
-    await this.submitCurrentStep();
-    await this.submitCurrentStep();
-    await this.submitCurrentStep();
-    await this.submitCurrentStep();
+  async fillRoutineDetails({ foodType = 'Chicken kibble' } = {}) {
+    await this.fillField('Food type', foodType);
+  }
 
-    await this.enterField('Food type', 'Chicken kibble');
-    await this.submitCurrentStep();
+  async fillBookingDetails({
+    arrivalDate = '2026-04-10',
+    departureDate = '2026-04-15',
+    dropoffTime = '09:30',
+    collectionTime = '11:00',
+    signature = 'Jordan Miles',
+  } = {}) {
+    await this.fillField('Arrival date', arrivalDate);
+    await this.fillField('Departure date', departureDate);
+    await this.fillField('Drop-off time', dropoffTime);
+    await this.fillField('Collection time', collectionTime);
+    await this.fillField('Signature', signature);
+  }
 
-    await this.enterField('Arrival date', '2026-04-10');
-    await this.enterField('Departure date', '2026-04-15');
-    await this.enterField('Drop-off time', '09:30');
-    await this.enterField('Collection time', '11:00');
-    await this.enterField('Signature', 'Jordan Miles');
-
+  async acceptRequiredDeclarations() {
     await this.page.getByLabel('Information supplied is accurate').check();
     await this.page.getByLabel('Owner agrees to boarding terms').check();
     await this.page.getByLabel('Owner gives privacy consent').check();
+  }
 
-    await this.page.getByRole('button', { name: /review details/i }).click();
+  async completeJourneyToBookingStep() {
+    await this.fillOwnerDetails();
+    await this.nextStepButton.click();
+
+    await this.fillPetDetails();
+    await this.nextStepButton.click();
+
+    await this.fillVetDetails();
+    await this.nextStepButton.click();
+
+    await this.skipCurrentStep(4);
+
+    await this.fillRoutineDetails();
+    await this.nextStepButton.click();
+  }
+
+  async completeValidJourney() {
+    await this.completeJourneyToBookingStep();
+    await this.fillBookingDetails();
+    await this.acceptRequiredDeclarations();
+    await this.reviewDetailsButton.click();
+    await expect(this.reviewSection).toBeVisible();
+  }
+
+  async filterOwners(query) {
+    await this.searchField.fill(query);
+  }
+
+  async selectOwnerRecord(id) {
+    await this.page.getByTestId(`select-row-${id}`).check();
+  }
+
+  async deleteSelectedOwners() {
+    await this.page.getByTestId('delete-owner-button').click();
   }
 
   async editSection(sectionTitle) {
@@ -88,70 +213,74 @@ class KennelBoardingPage {
   }
 
   async advanceToConfirmationPage() {
-    if (await this.page.getByRole('button', { name: /next step/i }).isVisible().catch(() => false)) {
-      await this.submitCurrentStep();
+    if (await this.reviewDetailsButton.isVisible().catch(() => false)) {
+      await this.reviewDetailsButton.click();
+      return;
     }
 
-    for (let index = 0; index < 3; index += 1) {
-      const reviewButton = this.page.getByRole('button', { name: /review details/i });
-      if (await reviewButton.isVisible().catch(() => false)) {
-        await reviewButton.click();
+    for (let index = 0; index < 6; index += 1) {
+      if (await this.reviewDetailsButton.isVisible().catch(() => false)) {
+        await this.reviewDetailsButton.click();
         return;
       }
 
-      const nextButton = this.page.getByRole('button', { name: /next step/i });
-      if (await nextButton.isVisible().catch(() => false)) {
-        await nextButton.click();
+      if (await this.nextStepButton.isVisible().catch(() => false)) {
+        await this.nextStepButton.click();
       }
     }
+
+    throw new Error('Unable to reach the confirmation page.');
   }
 
   async confirmEnrolment() {
-    await this.page.getByRole('button', { name: /confirm and finish/i }).click();
+    await this.confirmButton.click();
   }
 
   async expectHeadingVisible() {
-    await this.page.getByRole('heading', { name: /pet enrolment administration/i }).waitFor();
+    await expect(this.heading).toBeVisible();
   }
 
   async expectOwnerSearchVisible() {
-    assert.equal(await this.page.getByTestId('list-view-search').isVisible(), true);
+    await expect(this.searchField).toBeVisible();
   }
 
   async expectAddOwnerVisible() {
-    assert.equal(await this.page.getByRole('button', { name: /add new owner/i }).isVisible(), true);
+    await expect(this.addOwnerButton).toBeVisible();
   }
 
   async expectResultsTableVisible() {
-    assert.equal(await this.page.getByTestId('list-view-table').isVisible(), true);
+    await expect(this.resultsTable).toBeVisible();
   }
 
   async expectErrorMessage(message) {
-    const text = await this.page.locator('.boarding-form__error').textContent();
-    assert.equal((text || '').trim(), message);
+    await expect(this.errorAlert).toHaveText(message);
   }
 
   async expectCurrentStep(stepLabel) {
-    const text = await this.page.locator('.boarding-form__progressbar-meta span').first().textContent();
-    assert.equal((text || '').trim(), stepLabel);
+    await expect(this.page.locator('.boarding-form__progressbar-meta span').first()).toHaveText(stepLabel);
   }
 
   async expectConfirmationPageVisible() {
-    assert.equal(await this.page.locator('.boarding-form__review').isVisible(), true);
+    await expect(this.reviewSection).toBeVisible();
   }
 
   async expectReviewContains(value) {
-    const text = await this.page.locator('.boarding-form__review').textContent();
-    assert.equal((text || '').includes(value), true);
+    await expect(this.reviewSection).toContainText(value);
   }
 
   async expectListViewVisible() {
-    await this.page.getByTestId('list-view-table').waitFor();
+    await expect(this.resultsTable).toBeVisible();
   }
 
-  async expectSuccessBannerVisible() {
-    const text = await this.page.locator('.boarding-page__banner').textContent();
-    assert.equal(Boolean((text || '').trim()), true);
+  async expectSuccessBannerVisible(message) {
+    await expect(this.successBanner).toBeVisible();
+    if (message) {
+      await expect(this.successBanner).toHaveText(message);
+    }
+  }
+
+  async expectFilteredRowCount(count) {
+    await expect(this.listRows).toHaveCount(count);
   }
 }
 
