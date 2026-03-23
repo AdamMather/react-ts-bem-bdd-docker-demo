@@ -6,6 +6,7 @@ const reactRefreshPlugin = require('eslint-plugin-react-refresh');
 module.exports = [
   {
     ignores: [
+      'coverage/**',
       'dist/**',
       'node_modules/**',
       'playwright-report/**',
@@ -52,7 +53,11 @@ module.exports = [
     },
   },
   {
-    files: ['tests/**/*.js'],
+    files: [
+      'tests/e2e/**/*.js',
+      'tests/page_objects/**/*.js',
+      'tests/step_definitions/**/*.js',
+    ],
     languageOptions: {
       sourceType: 'commonjs',
       globals: {
