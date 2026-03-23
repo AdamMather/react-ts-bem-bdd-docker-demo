@@ -10,5 +10,12 @@ export default defineConfig({
     css: true,
     globals: true,
     include: ['src/**/*.test.{js,jsx,ts,tsx}'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'lcov'],
+      reportsDirectory: './coverage',
+      include: ['src/**/*.{js,jsx,ts,tsx}'],
+      exclude: ['src/**/*.test.{js,jsx,ts,tsx}'],
+    },
   },
 })
