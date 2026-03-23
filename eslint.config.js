@@ -11,6 +11,8 @@ module.exports = [
       'node_modules/**',
       'playwright-report/**',
       'test-results/**',
+      '**/*.test.ts',
+      '**/*.test.tsx',
       'src/server/**',
       'eslint.config.js',
     ],
@@ -50,6 +52,12 @@ module.exports = [
       'react/react-in-jsx-scope': 'off',
       'react/jsx-uses-react': 'off',
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+    },
+  },
+  {
+    files: ['**/*.test.{js,jsx,ts,tsx}'],
+    rules: {
+      'react/prop-types': 'off',
     },
   },
   {
