@@ -9,6 +9,10 @@ services:
       - "5433:5432"
     volumes:
       - ./db/migration.sql:/docker-entrypoint-initdb.d/migration.sql:ro
+    networks:
+      default:
+        aliases:
+          - db
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U vac -d vac"]
       interval: 5s
@@ -32,6 +36,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    networks:
+      - default
     healthcheck:
       test: ["CMD-SHELL", "node -e \"const http=require('http');const req=http.get('http://127.0.0.1:3001/api/health',res=>process.exit(res.statusCode===200?0:1));req.on('error',()=>process.exit(1));\""]
       interval: 5s
@@ -45,3 +51,9 @@ services:
     depends_on:
       api:
         condition: service_healthy
+    networks:
+      - default
+
+networks:
+  default:
+    name: vac-test_default

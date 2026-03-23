@@ -3,6 +3,7 @@ import { Vehicle } from '../../types';
 import config, { vehicleDetail } from '../../config';
 import useFetchRecord from '../../utils/data';
 import useDateFormatter from '../../utils/date';
+import { createEmptyVehicle, normalizeVehicle, updateFormValue } from '../../utils/recordTransforms';
 import './VehicleDetail.css';
 import AutoCompleteTextbox from '../organisms/AutoCompleteTextbox';
 
@@ -17,27 +18,7 @@ const VehicleDetail: React.FC<VehicleDetailProps> = ({ onSaveVehicle, vehicle })
   const { contactNames, getContactNames } = useFetchRecord();
   const { formatDate } = useDateFormatter();
 
-  const [formVehicle, setFormVehicle] = useState<Vehicle>({
-    id: 0,
-    contact_id: 0,
-    make: '',
-    model: '',
-    registered: new Date(),
-    purchased: new Date()
-  });
-
-  const normalizeVehicle = (raw: Vehicle | null | undefined): Vehicle => {
-    const source = (raw || {}) as Record<string, unknown>;
-
-    return {
-      id: Number(source.id || 0),
-      contact_id: Number(source.contact_id || 0),
-      make: String(source.make || ''),
-      model: String(source.model || ''),
-      registered: source.registered ? new Date(String(source.registered)) : new Date(),
-      purchased: source.purchased ? new Date(String(source.purchased)) : new Date(),
-    };
-  };
+  const [formVehicle, setFormVehicle] = useState<Vehicle>(createEmptyVehicle());
 
   const vehicleMake = vehicleDetail.vehicleMake;
   const vehicleModel = vehicleDetail.vehicleModel;
@@ -52,8 +33,7 @@ const VehicleDetail: React.FC<VehicleDetailProps> = ({ onSaveVehicle, vehicle })
   }, [apiContactNames, vehicle]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormVehicle({ ...formVehicle, [name]: value });
+    setFormVehicle((current) => updateFormValue(current, e));
   };
 
   const handleSubmit = (e: React.FormEvent) => {

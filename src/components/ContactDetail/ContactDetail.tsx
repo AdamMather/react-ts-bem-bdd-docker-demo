@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import config from '../../config';
 import { Contact, Address, Vehicle } from '../../types';
+import { toggleSelectedId } from '../../utils/ui';
 import './ContactDetail.css';
 import ListView from '../ListView/ListView';
 import ActionBar from '../ActionBar/ActionBar';
@@ -103,15 +104,11 @@ const ContactDetail: React.FC<ContactDetailProps> = ({ onAddAddress, onAddVehicl
   };
 
   const handleSelectAddress = (id: number) => {
-    setSelectedIds((prevSelected) =>
-      prevSelected.includes(id) ? prevSelected.filter((addressId) => addressId !== id) : [...prevSelected, id]
-    );
+    setSelectedIds((prevSelected) => toggleSelectedId(prevSelected, id));
   };
 
   const handleSelectVehicle = (id: number) => {
-    setSelectedIds((prevSelected) =>
-      prevSelected.includes(id) ? prevSelected.filter((vehicleId) => vehicleId !== id) : [...prevSelected, id]
-    );
+    setSelectedIds((prevSelected) => toggleSelectedId(prevSelected, id));
     console.log(`contactDetail: ${selectedIds}`);
     selectedVehicles(selectedIds);
   };

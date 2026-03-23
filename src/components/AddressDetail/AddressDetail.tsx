@@ -3,6 +3,7 @@ import { Address } from '../../types';
 import config from '../../config';
 import useFetchRecord from '../../utils/data';
 import useDateFormatter from '../../utils/date';
+import { createEmptyAddress, normalizeAddress, updateFormValue } from '../../utils/recordTransforms';
 import './AddressDetail.css';
 
 interface AddressDetailProps {
@@ -15,33 +16,7 @@ const AddressDetail: React.FC<AddressDetailProps> = ({ onSaveAddress, address })
   const {  contactNames, getContactNames } = useFetchRecord();
   const { formatDate } = useDateFormatter();
 
-  const [formAddress, setFormAddress] = useState<Address>({
-    id: 0,
-    contact_id: 0,
-    addressLine1: '',
-    addressLine2: '',
-    addressLine3: '',
-    addressLine4: '',
-    postcode: '',
-    occupyStart: new Date(),
-    occupyEnd: new Date()
-  });
-
-  const normalizeAddress = (raw: Address | null | undefined): Address => {
-    const source = (raw || {}) as Record<string, unknown>;
-
-    return {
-      id: Number(source.id || 0),
-      contact_id: Number(source.contact_id || 0),
-      addressLine1: String(source.addressLine1 || source.AddressLine1 || ''),
-      addressLine2: String(source.addressLine2 || source.AddressLine2 || ''),
-      addressLine3: String(source.addressLine3 || source.AddressLine3 || ''),
-      addressLine4: String(source.addressLine4 || source.AddressLine4 || ''),
-      postcode: String(source.postcode || source.PostCode || ''),
-      occupyStart: source.occupyStart ? new Date(String(source.occupyStart)) : new Date(),
-      occupyEnd: source.occupyEnd ? new Date(String(source.occupyEnd)) : new Date(),
-    };
-  };
+  const [formAddress, setFormAddress] = useState<Address>(createEmptyAddress());
 
   useEffect(() => {
     // call api to populate contact names vdetail
@@ -53,8 +28,7 @@ const AddressDetail: React.FC<AddressDetailProps> = ({ onSaveAddress, address })
   }, [apiContactNames, address]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormAddress({ ...formAddress, [name]: value });
+    setFormAddress((current) => updateFormValue(current, e));
   };
 
   const handleSubmit = (e: React.FormEvent) => {

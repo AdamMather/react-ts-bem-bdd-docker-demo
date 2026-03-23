@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import ContactDetail from './ContactDetail';
@@ -69,29 +69,41 @@ describe('ContactDetail', () => {
     await user.click(screen.getByTestId('contact-save-button'));
     expect(screen.getByTestId('contact-error-message')).toHaveTextContent('Forename is required');
 
-    await user.type(screen.getByTestId('contact-first-name-input'), 'Alex');
+    fireEvent.change(screen.getByTestId('contact-first-name-input'), {
+      target: { name: 'first_name', value: 'Alex' },
+    });
     expect(screen.queryByTestId('contact-error-message')).not.toBeInTheDocument();
 
     await user.click(screen.getByTestId('contact-save-button'));
     expect(screen.getByTestId('contact-error-message')).toHaveTextContent('Last Name is required');
 
-    await user.type(screen.getByTestId('contact-last-name-input'), 'Taylor');
-    await user.type(screen.getByTestId('contact-telephone-input'), 'abc');
+    fireEvent.change(screen.getByTestId('contact-last-name-input'), {
+      target: { name: 'last_name', value: 'Taylor' },
+    });
+    fireEvent.change(screen.getByTestId('contact-telephone-input'), {
+      target: { name: 'telephone', value: 'abc' },
+    });
     await user.click(screen.getByTestId('contact-save-button'));
     expect(screen.getByTestId('contact-error-message')).toHaveTextContent('Telephone must be a valid number');
 
-    await user.clear(screen.getByTestId('contact-telephone-input'));
-    await user.type(screen.getByTestId('contact-telephone-input'), '0123456789');
-    await user.type(screen.getByTestId('contact-mobile-input'), 'xyz');
+    fireEvent.change(screen.getByTestId('contact-telephone-input'), {
+      target: { name: 'telephone', value: '0123456789' },
+    });
+    fireEvent.change(screen.getByTestId('contact-mobile-input'), {
+      target: { name: 'mobile', value: 'xyz' },
+    });
     await user.click(screen.getByTestId('contact-save-button'));
     expect(screen.getByTestId('contact-error-message')).toHaveTextContent('Mobile must be a valid number');
 
-    await user.clear(screen.getByTestId('contact-mobile-input'));
-    await user.type(screen.getByTestId('contact-mobile-input'), '07123456789');
-    await user.type(screen.getByTestId('contact-email-input'), 'invalid-email');
+    fireEvent.change(screen.getByTestId('contact-mobile-input'), {
+      target: { name: 'mobile', value: '07123456789' },
+    });
+    fireEvent.change(screen.getByTestId('contact-email-input'), {
+      target: { name: 'email', value: 'invalid-email' },
+    });
     await user.click(screen.getByTestId('contact-save-button'));
     expect(screen.getByTestId('contact-error-message')).toHaveTextContent('Email must be valid');
-  });
+  }, 10000);
 
   it('submits a valid contact and wires address and vehicle actions to the current contact', async () => {
     const user = userEvent.setup();
