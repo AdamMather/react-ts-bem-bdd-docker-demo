@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import Home from './Home';
@@ -221,5 +221,50 @@ describe('Home', () => {
     await waitFor(() => {
       expect(apiPost).toHaveBeenCalledWith(expect.stringContaining('/api/vehicles'), expect.objectContaining({ id: 0, contact_id: 4 }));
     });
+  });
+
+  it('handles save and delete failures without leaving the current view', async () => {
+    const user = userEvent.setup();
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    apiPost.mockRejectedValueOnce(new Error('save failed'));
+
+    render(<Home />);
+
+    await user.click(screen.getByText('add-Contact'));
+    await user.click(screen.getByText('save-contact'));
+
+    await waitFor(() => {
+      expect(consoleError).toHaveBeenCalledWith('Error saving contact record:', expect.any(Error));
+    });
+    expect(screen.getByTestId('mock-contact-detail')).toBeInTheDocument();
+    expect(screen.queryByTestId('save-banner')).not.toBeInTheDocument();
+
+    cleanup();
+    render(<Home />);
+    await user.click(screen.getByText('edit-contact'));
+    await user.click(screen.getByText('go-address'));
+    await user.click(screen.getByText('save-address'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('save-banner')).toHaveTextContent('Address saved successfully.');
+    });
+
+    cleanup();
+    render(<Home />);
+    await user.click(screen.getByText('edit-contact'));
+    await user.click(screen.getByText('go-vehicle'));
+    await user.click(screen.getByText('save-vehicle'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('save-banner')).toHaveTextContent('Vehicle saved successfully.');
+    });
+
+    cleanup();
+    render(<Home />);
+    await user.click(screen.getByText('delete-Contact'));
+
+    expect(apiDelete).toHaveBeenCalledTimes(0);
+
+    consoleError.mockRestore();
   });
 });

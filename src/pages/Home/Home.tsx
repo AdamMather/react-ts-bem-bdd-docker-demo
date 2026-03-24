@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import ActionBar from '../../components/ActionBar/ActionBar';
 import ListView from '../../components/ListView/ListView';
 import ContactDetail from '../../components/ContactDetail/ContactDetail';
@@ -7,7 +7,9 @@ import VehicleDetail from '../../components/VehicleDetail/VehicleDetail';
 import config from '../../config';
 import useFetchRecord from '../../utils/data';
 import { Contact, Address, Vehicle } from '../../types';
-import apiClient from '../../services/apiClient';
+import { deleteEntityRecords, saveEntityRecord } from '../../utils/recordActions';
+import { createEmptyAddress, createEmptyVehicle } from '../../utils/recordTransforms';
+import { toggleSelectedId, useTimedBanner } from '../../utils/ui';
 import './Home.css';
 
 const Home: React.FC = () => {
@@ -30,26 +32,7 @@ const Home: React.FC = () => {
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
-  const [bannerMessage, setBannerMessage] = useState<string | null>(null);
-  const bannerTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (bannerTimeoutRef.current) {
-        clearTimeout(bannerTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  const showBanner = (message: string) => {
-    setBannerMessage(message);
-    if (bannerTimeoutRef.current) {
-      clearTimeout(bannerTimeoutRef.current);
-    }
-    bannerTimeoutRef.current = setTimeout(() => {
-      setBannerMessage(null);
-    }, 2500);
-  };
+  const { bannerMessage, showBanner } = useTimedBanner();
 
   const handleAddContact = () => {
     setSelectedContact(null);
@@ -57,29 +40,12 @@ const Home: React.FC = () => {
   };
 
   const handleAddAddress = (contactId = 0) => {
-    setSelectedAddress({
-      id: 0,
-      contact_id: contactId,
-      addressLine1: '',
-      addressLine2: '',
-      addressLine3: '',
-      addressLine4: '',
-      postcode: '',
-      occupyStart: new Date(),
-      occupyEnd: new Date(),
-    });
+    setSelectedAddress(createEmptyAddress(contactId));
     setView(navAddress);
   };
 
   const handleAddVehicle = (contactId = 0) => {
-    setSelectedVehicle({
-      id: 0,
-      contact_id: contactId,
-      make: '',
-      model: '',
-      registered: new Date(),
-      purchased: new Date(),
-    });
+    setSelectedVehicle(createEmptyVehicle(contactId));
     setView(navVehicles);
   };
 
@@ -89,40 +55,28 @@ const Home: React.FC = () => {
   };
 
   const handleSelectContact = (id: number) => {
-    setSelectedIds((prevSelected) =>
-      prevSelected.includes(id) ? prevSelected.filter((contactId) => contactId !== id) : [...prevSelected, id]
-    );
+    setSelectedIds((prevSelected) => toggleSelectedId(prevSelected, id));
   };
 
   const handleDeleteContacts = async (_apiUrl?: string, ids: number[] = selectedIds) => {
-    if (ids.length === 0) return;
-
-    await apiClient.delete(apiContacts, {
-      data: { ids },
+    await deleteEntityRecords({
+      apiUrl: apiContacts,
+      ids,
+      onDeleted: () => setSelectedIds([]),
+      refresh: fetchRecord,
+      errorMessage: 'Failed to delete contacts:',
     });
-    setSelectedIds([]);
-    fetchRecord(apiContacts);
   };
 
   const handleSaveContact = async (contact: Contact) => {
-    try {
-      if (contact.id) {
-        console.log('contact update...');
-        console.log(`path: ${apiContacts} id: ${contact.id}`);
-        await apiClient.put(`${apiContacts}/${contact.id}`, contact);
-        console.log('update successful!');
-      } else {
-        console.log('create contact...');
-        await apiClient.post(apiContacts, contact);
-        console.log('successfully created!');
-      }
-      // Refresh the list view
-      console.log('record successfully saved!')
-      setView(navContactList);
-      showBanner('Contact saved successfully.');
-    } catch (error) {
-      console.error('Error saving contact record:', error);
-    }
+    await saveEntityRecord({
+      apiUrl: apiContacts,
+      record: contact,
+      entityLabel: 'Contact',
+      onSaved: () => setView(navContactList),
+      showBanner,
+      errorMessage: 'Error saving contact record:',
+    });
   };
 
   const handleSelectedVehicle = (arrIds : number[]) => {
@@ -131,68 +85,40 @@ const Home: React.FC = () => {
   }
 
   const handleSaveAddress = async (address: Address) => {
-    try {
-      if (address.id) {
-        console.log('address update...');
-        console.log(`path: ${apiAddress} id: ${address.id}`);
-        await apiClient.put(`${apiAddress}/${address.id}`, address);
-        console.log('update successful!');
-      } else {
-        console.log('create address...');
-        await apiClient.post(apiAddress, address);
-        console.log('successfully created!');
-      }
-      fetchRecord(apiAddress);
-      // Refresh the list view
-      console.log('record successfully saved!')
-      setView(navContactList);
-      showBanner('Address saved successfully.');
-    } catch (error) {
-      console.error('Error saving address record:', error);
-    }
+    await saveEntityRecord({
+      apiUrl: apiAddress,
+      record: address,
+      entityLabel: 'Address',
+      onSaved: () => setView(navContactList),
+      refresh: fetchRecord,
+      showBanner,
+      errorMessage: 'Error saving address record:',
+    });
   };
 
   const handleSaveVehicle = async (vehicle: Vehicle) => {
-    try {
-      if (vehicle.id) {
-        console.log('vehicle update...');
-        console.log(`path: ${apiVehicles} id: ${vehicle.id}`);
-        await apiClient.put(`${apiVehicles}/${vehicle.id}`, vehicle);
-        console.log('update successful!');
-      } else {
-        console.log('create vehicle...');
-        await apiClient.post(apiVehicles, vehicle);
-        console.log('successfully created!');
-      }
-      fetchRecord(apiVehicles);
-      // Refresh the list view
-      console.log('record successfully saved!')
-      setView(navContactList);
-      showBanner('Vehicle saved successfully.');
-    } catch (error) {
-      console.error('Error saving vehicle record:', error);
-    }
+    await saveEntityRecord({
+      apiUrl: apiVehicles,
+      record: vehicle,
+      entityLabel: 'Vehicle',
+      onSaved: () => setView(navContactList),
+      refresh: fetchRecord,
+      showBanner,
+      errorMessage: 'Error saving vehicle record:',
+    });
   };
 
   console.log(`vehicle api: ${apiVehicles}/${selectedContact?.id}`)
 
   const handleDeleteAction = async (apiUrl: string, ids: number[] = selectedIds) => {
-    console.log(`delete async action apiURL: ${apiUrl}`);
-    console.log(`selected ids: ${ids}`);
-    if (ids.length === 0) return;
-
-    console.log(`selectedIds not empty array...`);
-
-    try {
-      await apiClient.delete(apiUrl, {
-        data: { selectedIds: ids },
-      });
-      setSelectedIds([]);
-      fetchRecord(apiUrl);
-      console.log(`selectedIds deleted successfully...`);
-    } catch (error) {
-      console.error('Failed to delete items:', error);
-    }
+    await deleteEntityRecords({
+      apiUrl,
+      ids,
+      payloadKey: 'selectedIds',
+      onDeleted: () => setSelectedIds([]),
+      refresh: fetchRecord,
+      errorMessage: 'Failed to delete items:',
+    });
   };
 
   return (

@@ -1,10 +1,11 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import ActionBar from '../../components/ActionBar/ActionBar';
 import ListView from '../../components/ListView/ListView';
 import AutoCompleteTextbox from '../../components/organisms/AutoCompleteTextbox';
 import apiClient from '../../services/apiClient';
 import config from '../../config';
 import { BoardingOwnerRecord } from '../../types';
+import { toggleSelectedId, useTimedBanner } from '../../utils/ui';
 import './KennelBoarding.css';
 
 const vaccinationOptions = ['Distemper', 'Parvovirus', 'Hepatitis', 'Leptospirosis', 'Kennel Cough'];
@@ -106,22 +107,7 @@ const KennelBoarding: React.FC = () => {
   const [view, setView] = useState<ViewState>('list');
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [selectedRecord, setSelectedRecord] = useState<BoardingOwnerRecord | null>(null);
-  const [bannerMessage, setBannerMessage] = useState('');
-  const bannerTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => () => {
-    if (bannerTimeoutRef.current) {
-      clearTimeout(bannerTimeoutRef.current);
-    }
-  }, []);
-
-  const showBanner = (message: string) => {
-    setBannerMessage(message);
-    if (bannerTimeoutRef.current) {
-      clearTimeout(bannerTimeoutRef.current);
-    }
-    bannerTimeoutRef.current = setTimeout(() => setBannerMessage(''), 2500);
-  };
+  const { bannerMessage, showBanner } = useTimedBanner();
 
   const handleAdd = () => {
     setSelectedRecord(createEmptyRecord());
@@ -134,7 +120,7 @@ const KennelBoarding: React.FC = () => {
   };
 
   const handleSelect = (id: number) => {
-    setSelectedIds((current) => (current.includes(id) ? current.filter((item) => item !== id) : [...current, id]));
+    setSelectedIds((current) => toggleSelectedId(current, id));
   };
 
   const handleDelete = async (apiUrl: string, ids: number[]) => {
