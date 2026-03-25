@@ -1,4 +1,9 @@
 const { expect } = require('@playwright/test');
+const {
+  DEFAULT_JOURNEY_VALUES,
+  FIELD_LABELS,
+  REQUIRED_DECLARATION_LABELS,
+} = require('./kennelBoardingShared');
 
 class KennelBoardingPage {
   constructor(page, baseUrl = 'http://127.0.0.1:3000') {
@@ -62,23 +67,7 @@ class KennelBoardingPage {
   }
 
   field(label) {
-    const accessibleLabels = {
-      Species: 'Pet species',
-      Breed: 'Pet breed',
-      'Full name': 'Full name',
-      'Phone number': 'Phone number',
-      'Email address': 'Email address',
-      'Pet name': 'Pet name',
-      'Vet practice name': 'Vet practice name',
-      'Food type': 'Food type',
-      'Arrival date': 'Arrival date',
-      'Departure date': 'Departure date',
-      'Drop-off time': 'Drop-off time',
-      'Collection time': 'Collection time',
-      Signature: 'Signature',
-    };
-
-    const accessibleLabel = accessibleLabels[label];
+    const accessibleLabel = FIELD_LABELS[label];
     if (!accessibleLabel) {
       throw new Error(`No field mapping configured for "${label}"`);
     }
@@ -123,9 +112,9 @@ class KennelBoardingPage {
   }
 
   async fillOwnerDetails({
-    fullName = 'Jordan Miles',
-    phone = '07123456789',
-    email = 'jordan.miles@example.com',
+    fullName = DEFAULT_JOURNEY_VALUES.owner.fullName,
+    phone = DEFAULT_JOURNEY_VALUES.owner.phone,
+    email = DEFAULT_JOURNEY_VALUES.owner.email,
   } = {}) {
     await this.fillField('Full name', fullName);
     await this.fillField('Phone number', phone);
@@ -133,9 +122,9 @@ class KennelBoardingPage {
   }
 
   async fillPetDetails({
-    petName = 'Biscuit',
-    speciesQuery = 'Do',
-    breedQuery = 'Cock',
+    petName = DEFAULT_JOURNEY_VALUES.pet.petName,
+    speciesQuery = DEFAULT_JOURNEY_VALUES.pet.speciesQuery,
+    breedQuery = DEFAULT_JOURNEY_VALUES.pet.breedQuery,
   } = {}) {
     await this.fillField('Pet name', petName);
     await this.fillAutocompleteField('Species', speciesQuery, 'species');
@@ -143,20 +132,20 @@ class KennelBoardingPage {
     await this.fillAutocompleteField('Breed', breedQuery, 'breed');
   }
 
-  async fillVetDetails({ vetPracticeName = 'River' } = {}) {
+  async fillVetDetails({ vetPracticeName = DEFAULT_JOURNEY_VALUES.vet.vetPracticeName } = {}) {
     await this.fillAutocompleteField('Vet practice name', vetPracticeName, 'vet_practice_name');
   }
 
-  async fillRoutineDetails({ foodType = 'Chicken kibble' } = {}) {
+  async fillRoutineDetails({ foodType = DEFAULT_JOURNEY_VALUES.routine.foodType } = {}) {
     await this.fillField('Food type', foodType);
   }
 
   async fillBookingDetails({
-    arrivalDate = '2026-04-10',
-    departureDate = '2026-04-15',
-    dropoffTime = '09:30',
-    collectionTime = '11:00',
-    signature = 'Jordan Miles',
+    arrivalDate = DEFAULT_JOURNEY_VALUES.booking.arrivalDate,
+    departureDate = DEFAULT_JOURNEY_VALUES.booking.departureDate,
+    dropoffTime = DEFAULT_JOURNEY_VALUES.booking.dropoffTime,
+    collectionTime = DEFAULT_JOURNEY_VALUES.booking.collectionTime,
+    signature = DEFAULT_JOURNEY_VALUES.booking.signature,
   } = {}) {
     await this.fillField('Arrival date', arrivalDate);
     await this.fillField('Departure date', departureDate);
@@ -166,9 +155,9 @@ class KennelBoardingPage {
   }
 
   async acceptRequiredDeclarations() {
-    await this.page.getByLabel('Information supplied is accurate').check();
-    await this.page.getByLabel('Owner agrees to boarding terms').check();
-    await this.page.getByLabel('Owner gives privacy consent').check();
+    for (const label of REQUIRED_DECLARATION_LABELS) {
+      await this.page.getByLabel(label).check();
+    }
   }
 
   async completeJourneyToBookingStep() {
