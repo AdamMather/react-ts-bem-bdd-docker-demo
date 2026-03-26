@@ -20,11 +20,10 @@ const ListView: React.FC<ListViewProps> = ({ onSelected, onEdit, fields, selecte
 
   useEffect(() => {
     fetchList(apiUrl);
-  }, [apiUrl, selectedIds]); // Empty dependency array to run effect only once on component mount
+  }, [apiUrl, selectedIds]);
 
   // Fetch list from server when component mounts
   const fetchList = async (api: string) => {
-    console.log(`api: ${api}`);
     try {
       const response = await apiClient.get(api);
       const data = response.data;

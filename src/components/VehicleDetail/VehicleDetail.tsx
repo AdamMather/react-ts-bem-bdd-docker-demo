@@ -38,7 +38,6 @@ const VehicleDetail: React.FC<VehicleDetailProps> = ({ onSaveVehicle, vehicle })
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log(`formVehicle: ${JSON.stringify(formVehicle)}`);
     onSaveVehicle(formVehicle);
   };
 

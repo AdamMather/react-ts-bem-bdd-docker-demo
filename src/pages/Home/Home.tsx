@@ -81,8 +81,7 @@ const Home: React.FC = () => {
 
   const handleSelectedVehicle = (arrIds : number[]) => {
     setSelectedIds(arrIds);
-    console.log(`Home - handle selected vehicles: ${selectedIds}`)
-  }
+  };
 
   const handleSaveAddress = async (address: Address) => {
     await saveEntityRecord({
@@ -107,8 +106,6 @@ const Home: React.FC = () => {
       errorMessage: 'Error saving vehicle record:',
     });
   };
-
-  console.log(`vehicle api: ${apiVehicles}/${selectedContact?.id}`)
 
   const handleDeleteAction = async (apiUrl: string, ids: number[] = selectedIds) => {
     await deleteEntityRecords({

@@ -108,9 +108,11 @@ const ContactDetail: React.FC<ContactDetailProps> = ({ onAddAddress, onAddVehicl
   };
 
   const handleSelectVehicle = (id: number) => {
-    setSelectedIds((prevSelected) => toggleSelectedId(prevSelected, id));
-    console.log(`contactDetail: ${selectedIds}`);
-    selectedVehicles(selectedIds);
+    setSelectedIds((prevSelected) => {
+      const nextSelected = toggleSelectedId(prevSelected, id);
+      selectedVehicles(nextSelected);
+      return nextSelected;
+    });
   };
 
   const handleAddAddress = () => {

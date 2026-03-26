@@ -33,7 +33,6 @@ const AddressDetail: React.FC<AddressDetailProps> = ({ onSaveAddress, address })
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log(`formAddress: ${JSON.stringify(formAddress)}`);
     onSaveAddress(formAddress);
   };
 

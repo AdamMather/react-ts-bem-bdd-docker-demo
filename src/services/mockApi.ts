@@ -15,8 +15,12 @@ const normalizePath = (url: string): string => {
 
   try {
     return new URL(url, 'http://local.mock').pathname;
-  } catch {
-    return url;
+  } catch (error) {
+    if (error instanceof TypeError) {
+      return url;
+    }
+
+    throw error;
   }
 };
 

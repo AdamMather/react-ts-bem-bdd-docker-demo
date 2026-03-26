@@ -74,8 +74,12 @@ const requestWithMockFallback = async (
 
   try {
     response = await performRequest(method, url, options);
-  } catch {
-    return mockHandlers[method]();
+  } catch (error) {
+    if (error instanceof Error) {
+      return mockHandlers[method]();
+    }
+
+    throw error;
   }
 
   if (!response.ok) {
