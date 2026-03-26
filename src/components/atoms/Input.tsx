@@ -8,6 +8,7 @@ interface InputProps {
   value: string;
   onChange: (e: ChangeEvent<HTMLInputElement>) => void;
   placeholder?: string;
+  list?: string;
   ariaLabel?: string;
   className?: string;
   role?: string;
@@ -24,6 +25,7 @@ const Input: FC<InputProps> = ({
   value,
   onChange,
   placeholder,
+  list,
   ariaLabel,
   className,
   role,
@@ -41,6 +43,7 @@ const Input: FC<InputProps> = ({
       onChange={onChange}
       className={`${styles.input} ${className ?? ''}`.trim()}
       placeholder={placeholder}
+      list={list}
       aria-label={ariaLabel}
       role={role}
       aria-expanded={ariaExpanded}

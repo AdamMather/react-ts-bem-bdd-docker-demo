@@ -50,7 +50,7 @@ const ContactDetail: React.FC<ContactDetailProps> = ({ onAddAddress, onAddVehicl
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormContact({ ...formContact, [name]: value });
+    setFormContact((current) => ({ ...current, [name]: value }));
     setErrorMessage('');
     setSuccessMessage('');
   };
@@ -58,7 +58,25 @@ const ContactDetail: React.FC<ContactDetailProps> = ({ onAddAddress, onAddVehicl
   const validateContact = (nextContact: Contact): string | null => {
     const isBlank = (value: string) => !value || value.trim() === '';
     const isDigits = (value: string) => /^\d+$/.test(value);
-    const isEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+    const isEmail = (value: string) => {
+      if (isBlank(value) || /\s/.test(value)) {
+        return false;
+      }
+
+      const atIndex = value.indexOf('@');
+      if (atIndex <= 0 || atIndex !== value.lastIndexOf('@') || atIndex === value.length - 1) {
+        return false;
+      }
+
+      const localPart = value.slice(0, atIndex);
+      const domainPart = value.slice(atIndex + 1);
+      if (!localPart || !domainPart) {
+        return false;
+      }
+
+      const dotIndex = domainPart.indexOf('.');
+      return dotIndex > 0 && dotIndex < domainPart.length - 1;
+    };
 
     const missingAll =
       isBlank(nextContact.first_name) &&
@@ -127,7 +145,7 @@ const ContactDetail: React.FC<ContactDetailProps> = ({ onAddAddress, onAddVehicl
     <div className="home" data-testid="contact-detail-container">
       {
         view === navContacts && (
-          <div className="contact-form" role="main" aria-label="Contact details workspace" data-testid="contact-workspace">
+          <main className="contact-form" aria-label="Contact details workspace" data-testid="contact-workspace">
             <section className="contact-form__section" aria-labelledby="contact-details-heading" data-testid="contact-details-section">
               <div className="contact-form__section-header">
                 <h2 id="contact-details-heading" className="contact-form__heading">Contact Details</h2>
@@ -189,7 +207,7 @@ const ContactDetail: React.FC<ContactDetailProps> = ({ onAddAddress, onAddVehicl
               <ActionBar onAdd={handleAddVehicle} onDelete={onDeleteVehicle} apiUrl={apiVehicles} selectedIds={selectedIds} domain={formVehicle} isDeleteDisabled={selectedIds.length === 0} />
               <ListView onSelected={handleSelectVehicle} onEdit={handleEditVehicle} fields={['make', 'model', 'registered']} selectedIds={selectedIds} apiUrl={`${apiVehicles}/${formContact.id}`} />
             </section>
-          </div>
+          </main>
         )
       }
       { view === navAddress && <AddressDetail onSaveAddress={onSaveAddress} address={selectedAddress} /> }

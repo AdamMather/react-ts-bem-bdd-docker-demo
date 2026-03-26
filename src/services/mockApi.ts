@@ -14,8 +14,8 @@ const normalizePath = (url: string): string => {
   }
 
   try {
-    return new URL(url, 'http://local.mock').pathname;
-  } catch (error) {
+  return new URL(url, 'https://local.mock').pathname;
+}  catch (error) {
     if (error instanceof TypeError) {
       return url;
     }
@@ -390,8 +390,9 @@ const normalizeVehiclePayload = (data: Vehicle): Vehicle => ({
 });
 
 const matchIdFromPath = (path: string, expression: RegExp) => {
-  const match = path.match(expression);
-  return match ? Number(match[1]) : null;
+  expression.lastIndex = 0;
+  const match = expression.exec(path);
+  return match?.[1] ? Number(match[1]) : null;
 };
 
 const createDefaultAddress = (contactId: number, firstName: string, lastName: string): Address => ({

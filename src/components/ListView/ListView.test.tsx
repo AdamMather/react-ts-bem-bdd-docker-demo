@@ -58,7 +58,7 @@ describe('ListView', () => {
     expect(screen.getByTestId('select-row-1')).toBeChecked();
     expect(screen.getByText('2026-01-02')).toBeInTheDocument();
     expect(screen.getByText('vip, active')).toBeInTheDocument();
-    expect(screen.getByText('[object Object]')).toBeInTheDocument();
+    expect(screen.getByText('{"code":7}')).toBeInTheDocument();
 
     await user.type(screen.getByTestId('list-view-search'), 'bob');
     expect(screen.queryByTestId('list-row-1')).not.toBeInTheDocument();

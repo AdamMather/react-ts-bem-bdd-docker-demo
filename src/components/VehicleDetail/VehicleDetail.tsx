@@ -24,13 +24,11 @@ const VehicleDetail: React.FC<VehicleDetailProps> = ({ onSaveVehicle, vehicle })
   const vehicleModel = vehicleDetail.vehicleModel;
 
   useEffect(() => {
-    // call api to populate contact names vdetail
     getContactNames(apiContactNames);
-    // if record exists, populate form variable state
     if (vehicle) {
       setFormVehicle(normalizeVehicle(vehicle));
     }
-  }, [apiContactNames, vehicle]);
+  }, [apiContactNames, getContactNames, vehicle]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormVehicle((current) => updateFormValue(current, e));
@@ -43,7 +41,7 @@ const VehicleDetail: React.FC<VehicleDetailProps> = ({ onSaveVehicle, vehicle })
 
   return (
     <form className="detail-form" onSubmit={handleSubmit} autoComplete="off" aria-label="Vehicle detail form" data-testid="vehicle-detail-form">
-      <input autoComplete="false" name="hidden" type="text" className={"detail-form__invisible"} aria-hidden="true" tabIndex={-1} />
+      <input autoComplete="false" name="hidden" type="text" className="detail-form__invisible" aria-hidden="true" tabIndex={-1} />
       <div className="detail-form__field">
         <label htmlFor="vehicleContact">Vehicle Contact</label>
         <select id="vehicleContact" name="contact_id" onChange={handleChange} value={formVehicle.contact_id} aria-label="Vehicle Contact" data-testid="vehicle-contact-select">
@@ -57,14 +55,6 @@ const VehicleDetail: React.FC<VehicleDetailProps> = ({ onSaveVehicle, vehicle })
       </div>
       <AutoCompleteTextbox id={vehicleMake.id} name={vehicleMake.name} onChange={handleChange} label={vehicleMake.label} value={formVehicle.make} placeholder={vehicleMake.placeholder} ariaLabel={vehicleMake.ariaLabel} apiUrl={utilsVehicleMake} />
       <AutoCompleteTextbox id={vehicleModel.id} name={vehicleModel.name} onChange={handleChange} label={vehicleModel.label} value={formVehicle.model} placeholder={vehicleModel.placeholder} ariaLabel={vehicleModel.ariaLabel} apiUrl={utilsVehicleModel} />
-      {/* <div className="detail-form__field">
-        <label htmlFor="make">Make</label>
-        <input id="make" name="make" type="text" onChange={handleChange} value={formVehicle.make} />
-      </div>
-      <div className="detail-form__field">
-        <label htmlFor="model">Model</label>
-        <input id="model" name="model" type="text" onChange={handleChange} value={formVehicle.model} />
-      </div> */}
       <div className="detail-form__field">
         <label htmlFor="registered">Registered</label>
         <input id="registered" name="registered" type="date" onChange={handleChange} value={formatDate(formVehicle.registered)} aria-label="Registered date" data-testid="vehicle-registered-input" />

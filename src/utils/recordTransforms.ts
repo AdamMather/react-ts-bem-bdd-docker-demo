@@ -1,6 +1,39 @@
 import { Address, Vehicle } from '../types';
 
-const toDateOrNow = (value: unknown): Date => (value ? new Date(String(value)) : new Date());
+const toDateOrNow = (value: unknown): Date => {
+  if (value instanceof Date) {
+    return value;
+  }
+
+  if (typeof value === 'string' || typeof value === 'number') {
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? new Date() : date;
+  }
+
+  return new Date();
+};
+
+const toText = (value: unknown): string => {
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  if (typeof value === 'number') {
+    return String(value);
+  }
+
+  return '';
+};
+
+const firstText = (...values: unknown[]): string => {
+  for (const value of values) {
+    const text = toText(value);
+    if (text) {
+      return text;
+    }
+  }
+  return '';
+};
 
 export const createEmptyAddress = (contactId = 0): Address => ({
   id: 0,
@@ -29,11 +62,11 @@ export const normalizeAddress = (raw: Address | null | undefined): Address => {
   return {
     id: Number(source.id || 0),
     contact_id: Number(source.contact_id || 0),
-    addressLine1: String(source.addressLine1 || source.AddressLine1 || ''),
-    addressLine2: String(source.addressLine2 || source.AddressLine2 || ''),
-    addressLine3: String(source.addressLine3 || source.AddressLine3 || ''),
-    addressLine4: String(source.addressLine4 || source.AddressLine4 || ''),
-    postcode: String(source.postcode || source.PostCode || ''),
+    addressLine1: firstText(source.addressLine1, source.AddressLine1),
+    addressLine2: firstText(source.addressLine2, source.AddressLine2),
+    addressLine3: firstText(source.addressLine3, source.AddressLine3),
+    addressLine4: firstText(source.addressLine4, source.AddressLine4),
+    postcode: firstText(source.postcode, source.PostCode),
     occupyStart: toDateOrNow(source.occupyStart),
     occupyEnd: toDateOrNow(source.occupyEnd),
   };
@@ -45,8 +78,8 @@ export const normalizeVehicle = (raw: Vehicle | null | undefined): Vehicle => {
   return {
     id: Number(source.id || 0),
     contact_id: Number(source.contact_id || 0),
-    make: String(source.make || ''),
-    model: String(source.model || ''),
+    make: toText(source.make),
+    model: toText(source.model),
     registered: toDateOrNow(source.registered),
     purchased: toDateOrNow(source.purchased),
   };

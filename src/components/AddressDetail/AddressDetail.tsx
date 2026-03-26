@@ -1,4 +1,4 @@
-import React, { useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import { Address } from '../../types';
 import config from '../../config';
 import useFetchRecord from '../../utils/data';
@@ -13,19 +13,17 @@ interface AddressDetailProps {
 
 const AddressDetail: React.FC<AddressDetailProps> = ({ onSaveAddress, address }) => {
   const { apiContactNames } = config;
-  const {  contactNames, getContactNames } = useFetchRecord();
+  const { contactNames, getContactNames } = useFetchRecord();
   const { formatDate } = useDateFormatter();
 
   const [formAddress, setFormAddress] = useState<Address>(createEmptyAddress());
 
   useEffect(() => {
-    // call api to populate contact names vdetail
     getContactNames(apiContactNames);
-    // if record exists, populate form variable state
-   if (address) {
+    if (address) {
       setFormAddress(normalizeAddress(address));
     }
-  }, [apiContactNames, address]);
+  }, [address, apiContactNames, getContactNames]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormAddress((current) => updateFormValue(current, e));

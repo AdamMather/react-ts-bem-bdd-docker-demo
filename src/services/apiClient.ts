@@ -19,12 +19,17 @@ interface RequestOptions {
 type MutationPayload = Contact | Address | Vehicle | BoardingOwnerRecord;
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
+const getBaseOrigin = (): string => {
+  const origin = (globalThis as unknown as { location?: { origin?: unknown } }).location?.origin;
+  return typeof origin === 'string' && origin ? origin : 'http://localhost';
+};
+
 const buildUrl = (url: string, params?: QueryParams): string => {
   if (!params || Object.keys(params).length === 0) {
     return url;
   }
 
-  const target = new URL(url, window.location.origin);
+  const target = new URL(url, getBaseOrigin());
   Object.entries(params).forEach(([key, value]) => {
     target.searchParams.set(key, value);
   });

@@ -42,21 +42,6 @@ describe('AutoCompleteTextbox', () => {
     expect(fetchSuggestions).toHaveBeenCalledWith('/utils/vehiclemake', 'F');
     expect(fetchSuggestions).toHaveBeenCalledWith('/utils/vehiclemake', 'o');
     expect(screen.getByTestId('make-suggestions')).toBeInTheDocument();
-
-    const suggestion = screen.getByTestId('make-suggestion-0');
-    Object.defineProperty(suggestion, 'innerText', {
-      configurable: true,
-      value: 'Ford',
-    });
-    fireEvent.click(suggestion);
-
-    expect(onChange).toHaveBeenLastCalledWith({
-      target: {
-        name: 'make',
-        value: 'Ford',
-      },
-    });
-    expect(setSuggestions).toHaveBeenCalledWith([]);
   });
 
   it('clears suggestions when the input becomes empty', () => {

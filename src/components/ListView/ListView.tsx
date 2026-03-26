@@ -13,8 +13,25 @@ interface ListViewProps {
   apiUrl: string;
 }
 
+const parseRecordId = (record: unknown): number | null => {
+  if (!record || typeof record !== 'object') {
+    return null;
+  }
+
+  const rawId = (record as { id?: unknown }).id;
+  if (typeof rawId === 'number' && Number.isFinite(rawId)) {
+    return rawId;
+  }
+
+  if (typeof rawId === 'string' && rawId.trim()) {
+    const asNumber = Number(rawId);
+    return Number.isFinite(asNumber) ? asNumber : null;
+  }
+
+  return null;
+};
+
 const ListView: React.FC<ListViewProps> = ({ onSelected, onEdit, fields, selectedIds, apiUrl }) => {
-  const [attributes, setAttributes] = useState<string[]>();
   const [list, setList] = useState<Array<Contact | Vehicle | BoardingOwnerRecord | Record<string, unknown>>>([]);
   const [search, setSearch] = useState('');
 
@@ -26,11 +43,7 @@ const ListView: React.FC<ListViewProps> = ({ onSelected, onEdit, fields, selecte
   const fetchList = async (api: string) => {
     try {
       const response = await apiClient.get(api);
-      const data = response.data;
-      if (data.length > 0) {
-        setAttributes(Object.keys(data[0]));
-      }
-      setList(data);
+      setList(response.data);
     } catch (error) {
       console.error('Error fetching list:', error);
       setList([]);
@@ -69,11 +82,19 @@ const ListView: React.FC<ListViewProps> = ({ onSelected, onEdit, fields, selecte
       return '';
     }
 
-    return String(value);
+    if (typeof value === 'boolean') {
+      return value ? 'true' : 'false';
+    }
+
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return '';
+    }
   };
 
   return (
-    <div className="list-view" role="region" aria-label="Searchable list" data-testid="list-view">
+    <section className="list-view" aria-label="Searchable list" data-testid="list-view">
       <ListViewSearch value={search} onChange={handleSearchChange} />
       <table className="list-view__table" aria-label="Results table" data-testid="list-view-table">
         <thead>
@@ -89,22 +110,27 @@ const ListView: React.FC<ListViewProps> = ({ onSelected, onEdit, fields, selecte
         </thead>
         <tbody>
   {filteredList.map((record) => {
+    const id = parseRecordId(record);
+    if (id == null) {
+      return null;
+    }
+
     const rowLabel = fields
       .map((field) => record[field])
       .filter((value) => typeof value === 'string' || typeof value === 'number')
       .slice(0, 2)
       .join(' ')
-      .trim() || `record ${record.id}`;
+      .trim() || `record ${id}`;
 
     return (
-      <tr key={record.id} data-testid={`list-row-${record.id}`}>
+      <tr key={id} data-testid={`list-row-${id}`}>
         <td className="list-view__select-col">
           <input
             type="checkbox"
-            checked={selectedIds.includes(record.id)}
-            onChange={() => onSelected(record.id)}
+            checked={selectedIds.includes(id)}
+            onChange={() => onSelected(id)}
             aria-label={`Select ${rowLabel}`}
-            data-testid={`select-row-${record.id}`}
+            data-testid={`select-row-${id}`}
           />
         </td>
         {fields.map((field) => (
@@ -114,8 +140,8 @@ const ListView: React.FC<ListViewProps> = ({ onSelected, onEdit, fields, selecte
           <button
             className="list-view__link-button"
             onClick={() => onEdit(record)}
-            aria-label={`Edit record ${record.id}`}
-            data-testid={`edit-row-${record.id}`}
+            aria-label={`Edit record ${id}`}
+            data-testid={`edit-row-${id}`}
           >
             Edit
           </button>
@@ -125,7 +151,7 @@ const ListView: React.FC<ListViewProps> = ({ onSelected, onEdit, fields, selecte
   })}
 </tbody>
       </table>
-    </div>
+    </section>
   );
 };
 

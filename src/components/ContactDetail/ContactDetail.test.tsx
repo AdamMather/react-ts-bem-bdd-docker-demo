@@ -103,6 +103,12 @@ describe('ContactDetail', () => {
     });
     await user.click(screen.getByTestId('contact-save-button'));
     expect(screen.getByTestId('contact-error-message')).toHaveTextContent('Email must be valid');
+
+    fireEvent.change(screen.getByTestId('contact-email-input'), {
+      target: { name: 'email', value: `${'a'.repeat(5000)}@${'b'.repeat(5000)}` },
+    });
+    await user.click(screen.getByTestId('contact-save-button'));
+    expect(screen.getByTestId('contact-error-message')).toHaveTextContent('Email must be valid');
   }, 10000);
 
   it('submits a valid contact and wires address and vehicle actions to the current contact', async () => {

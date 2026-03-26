@@ -116,6 +116,9 @@ const renderReviewSections = (
 };
 
 type ViewState = 'list' | 'detail';
+type BoardingFieldName = keyof BoardingOwnerRecord;
+type BoardingChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>;
+type BoardingMultiSelectName = 'vaccinations' | 'aggression_toward';
 
 const KennelBoarding: React.FC = () => {
   const { apiBoardingOwners } = config;
@@ -129,8 +132,8 @@ const KennelBoarding: React.FC = () => {
     setView('detail');
   };
 
-  const handleEdit = (record: BoardingOwnerRecord | Record<string, unknown>) => {
-    setSelectedRecord(record as BoardingOwnerRecord);
+  const handleEdit = (record: BoardingOwnerRecord) => {
+    setSelectedRecord(record);
     setView('detail');
   };
 
@@ -179,9 +182,9 @@ const KennelBoarding: React.FC = () => {
       </header>
 
       {bannerMessage ? (
-        <div className="boarding-page__banner" role="status" aria-live="polite">
+        <output className="boarding-page__banner" aria-live="polite">
           {bannerMessage}
-        </div>
+        </output>
       ) : null}
 
       {view === 'list' ? (
@@ -213,7 +216,7 @@ type BoardingFieldConfig =
   | {
       kind: 'text';
       label: string;
-      name: keyof BoardingOwnerRecord & string;
+      name: BoardingFieldName;
       inputType?: string;
       placeholder?: string;
       autoComplete?: string;
@@ -223,25 +226,25 @@ type BoardingFieldConfig =
   | {
       kind: 'textarea';
       label: string;
-      name: keyof BoardingOwnerRecord & string;
+      name: BoardingFieldName;
       rows?: number;
     }
   | {
       kind: 'toggle';
       label: string;
-      name: keyof BoardingOwnerRecord & string;
+      name: BoardingFieldName;
     }
   | {
       kind: 'radio';
       label: string;
-      name: keyof BoardingOwnerRecord & string;
+      name: BoardingFieldName;
       options: Array<{ label: string; value: string }>;
     }
   | {
       kind: 'autocomplete';
       id: string;
       label: string;
-      name: keyof BoardingOwnerRecord & string;
+      name: BoardingFieldName;
       ariaLabel: string;
       placeholder: string;
       apiUrl: string;
@@ -266,8 +269,8 @@ interface BoardingStepSection {
 const renderBoardingField = (
   field: BoardingFieldConfig,
   record: BoardingOwnerRecord,
-  updateField: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void,
-  updateMultiSelect: (name: 'vaccinations' | 'aggression_toward', value: string) => void,
+  updateField: (e: BoardingChangeEvent) => void,
+  updateMultiSelect: (name: BoardingMultiSelectName, value: string) => void,
   errorMessage: string,
   setRecord: React.Dispatch<React.SetStateAction<BoardingOwnerRecord>>
 ) => {
@@ -343,7 +346,7 @@ const renderBoardingField = (
         <CheckboxListField
           key={field.name}
           label={field.label}
-          values={record[field.name] as string[]}
+          values={record[field.name]}
           options={field.options}
           displayLabels={field.displayLabels}
           onChange={(value) => updateMultiSelect(field.name, value)}
@@ -375,8 +378,8 @@ const renderBoardingField = (
 const renderBoardingStepSection = (
   section: BoardingStepSection,
   record: BoardingOwnerRecord,
-  updateField: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void,
-  updateMultiSelect: (name: 'vaccinations' | 'aggression_toward', value: string) => void,
+  updateField: (e: BoardingChangeEvent) => void,
+  updateMultiSelect: (name: BoardingMultiSelectName, value: string) => void,
   errorMessage: string,
   setRecord: React.Dispatch<React.SetStateAction<BoardingOwnerRecord>>
 ) => (
@@ -419,10 +422,10 @@ const BoardingDetailForm: React.FC<BoardingDetailFormProps> = ({ initialRecord, 
   const progressLabel = useMemo(
     () =>
       `Step ${currentJourneyIndex + 1} of ${boardingJourneySteps.length}: ${boardingJourneySteps[currentJourneyIndex].label}`,
-    [currentJourneyIndex]
+    [currentJourneyIndex, isReviewing]
   );
 
-  const updateField = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const updateField = (e: BoardingChangeEvent) => {
     const { name, value, type } = e.target;
     const checked = 'checked' in e.target ? e.target.checked : false;
 
@@ -433,7 +436,7 @@ const BoardingDetailForm: React.FC<BoardingDetailFormProps> = ({ initialRecord, 
     setErrorMessage('');
   };
 
-  const updateMultiSelect = (name: 'vaccinations' | 'aggression_toward', value: string) => {
+  const updateMultiSelect = (name: BoardingMultiSelectName, value: string) => {
     setRecord((current) => {
       const currentValues = current[name];
       const nextValues = currentValues.includes(value)
@@ -445,32 +448,25 @@ const BoardingDetailForm: React.FC<BoardingDetailFormProps> = ({ initialRecord, 
   };
 
   const validateStep = (stepId: string) => {
-    if (stepId === 'owner') {
-      if (!record.full_name.trim()) return 'Owner Details: full name is required.';
-      if (!record.phone.trim()) return 'Owner Details: phone number is required.';
-    }
+    const requireText = (value: string, message: string) => (value.trim() ? '' : message);
+    const requireValue = (value: string, message: string) => (value ? '' : message);
 
-    if (stepId === 'pet' && !record.pet_name.trim()) {
-      return 'Pet Details: pet name is required.';
-    }
+    const validators: Partial<Record<string, () => string>> = {
+      owner: () =>
+        requireText(record.full_name, 'Owner Details: full name is required.')
+        || requireText(record.phone, 'Owner Details: phone number is required.'),
+      pet: () => requireText(record.pet_name, 'Pet Details: pet name is required.'),
+      vet: () => requireText(record.vet_practice_name, 'Veterinary: vet practice name is required.'),
+      routine: () => requireText(record.food_type, 'Feeding & Routine: food type is required.'),
+      booking: () =>
+        requireValue(record.arrival_date, 'Booking & Consent: arrival date is required.')
+        || requireValue(record.departure_date, 'Booking & Consent: departure date is required.')
+        || requireValue(record.dropoff_time, 'Booking & Consent: drop-off time is required.')
+        || requireValue(record.collection_time, 'Booking & Consent: collection time is required.')
+        || requireText(record.signature, 'Booking & Consent: signature is required.'),
+    };
 
-    if (stepId === 'vet' && !record.vet_practice_name.trim()) {
-      return 'Veterinary: vet practice name is required.';
-    }
-
-    if (stepId === 'routine' && !record.food_type.trim()) {
-      return 'Feeding & Routine: food type is required.';
-    }
-
-    if (stepId === 'booking') {
-      if (!record.arrival_date) return 'Booking & Consent: arrival date is required.';
-      if (!record.departure_date) return 'Booking & Consent: departure date is required.';
-      if (!record.dropoff_time) return 'Booking & Consent: drop-off time is required.';
-      if (!record.collection_time) return 'Booking & Consent: collection time is required.';
-      if (!record.signature.trim()) return 'Booking & Consent: signature is required.';
-    }
-
-    return '';
+    return validators[stepId]?.() ?? '';
   };
 
   const handleNext = () => {
@@ -669,7 +665,7 @@ const BoardingDetailForm: React.FC<BoardingDetailFormProps> = ({ initialRecord, 
       </div>
 
       <form className="boarding-form" onSubmit={handleFormSubmit} noValidate>
-        {!isReviewing ? renderBoardingStepSection(stepSections[currentStep], record, updateField, updateMultiSelect, errorMessage, setRecord) : null}
+        {isReviewing ? null : renderBoardingStepSection(stepSections[currentStep], record, updateField, updateMultiSelect, errorMessage, setRecord)}
 
         {isReviewing ? (
           <section className="boarding-form__review">{renderReviewSections(record, moveToStep)}</section>
@@ -694,7 +690,7 @@ const BoardingDetailForm: React.FC<BoardingDetailFormProps> = ({ initialRecord, 
               }
               setCurrentStep((step) => Math.max(step - 1, 0));
             }}
-            disabled={!currentStep && !isReviewing}
+            disabled={currentStep === 0 && !isReviewing}
           >
             Previous
           </button>
@@ -719,7 +715,7 @@ interface TextFieldProps {
   label: string;
   name: string;
   value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
+  onChange: (e: BoardingChangeEvent) => void;
   type?: string;
   placeholder?: string;
   autoComplete?: string;
@@ -738,7 +734,7 @@ interface TextAreaFieldProps {
   label: string;
   name: string;
   value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
+  onChange: (e: BoardingChangeEvent) => void;
   rows?: number;
 }
 
@@ -753,7 +749,7 @@ interface ToggleFieldProps {
   label: string;
   name: string;
   checked: boolean;
-  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
+  onChange: (e: BoardingChangeEvent) => void;
 }
 
 const ToggleField: React.FC<ToggleFieldProps> = ({ label, name, checked, onChange }) => (
@@ -767,7 +763,7 @@ interface RadioGroupFieldProps {
   label: string;
   name: string;
   value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
+  onChange: (e: BoardingChangeEvent) => void;
   options: Array<{ label: string; value: string }>;
 }
 

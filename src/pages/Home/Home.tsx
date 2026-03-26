@@ -13,7 +13,6 @@ import { toggleSelectedId, useTimedBanner } from '../../utils/ui';
 import './Home.css';
 
 const Home: React.FC = () => {
-  // Destructure config properties
   const {
     apiContacts,
     apiAddress,
@@ -25,8 +24,6 @@ const Home: React.FC = () => {
   } = config;
 
   const { fetchRecord } = useFetchRecord();
-
-  //
   const [view, setView] = useState(navContactList);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
@@ -58,18 +55,20 @@ const Home: React.FC = () => {
     setSelectedIds((prevSelected) => toggleSelectedId(prevSelected, id));
   };
 
-  const handleDeleteContacts = async (_apiUrl?: string, ids: number[] = selectedIds) => {
-    await deleteEntityRecords({
+  const handleDeleteContacts = (_apiUrl?: string, ids: number[] = selectedIds) => {
+    void deleteEntityRecords({
       apiUrl: apiContacts,
       ids,
       onDeleted: () => setSelectedIds([]),
-      refresh: fetchRecord,
+      refresh: (apiUrl) => {
+        void fetchRecord(apiUrl);
+      },
       errorMessage: 'Failed to delete contacts:',
     });
   };
 
-  const handleSaveContact = async (contact: Contact) => {
-    await saveEntityRecord({
+  const handleSaveContact = (contact: Contact) => {
+    void saveEntityRecord({
       apiUrl: apiContacts,
       record: contact,
       entityLabel: 'Contact',
@@ -83,37 +82,43 @@ const Home: React.FC = () => {
     setSelectedIds(arrIds);
   };
 
-  const handleSaveAddress = async (address: Address) => {
-    await saveEntityRecord({
+  const handleSaveAddress = (address: Address) => {
+    void saveEntityRecord({
       apiUrl: apiAddress,
       record: address,
       entityLabel: 'Address',
       onSaved: () => setView(navContactList),
-      refresh: fetchRecord,
+      refresh: (apiUrl) => {
+        void fetchRecord(apiUrl);
+      },
       showBanner,
       errorMessage: 'Error saving address record:',
     });
   };
 
-  const handleSaveVehicle = async (vehicle: Vehicle) => {
-    await saveEntityRecord({
+  const handleSaveVehicle = (vehicle: Vehicle) => {
+    void saveEntityRecord({
       apiUrl: apiVehicles,
       record: vehicle,
       entityLabel: 'Vehicle',
       onSaved: () => setView(navContactList),
-      refresh: fetchRecord,
+      refresh: (apiUrl) => {
+        void fetchRecord(apiUrl);
+      },
       showBanner,
       errorMessage: 'Error saving vehicle record:',
     });
   };
 
-  const handleDeleteAction = async (apiUrl: string, ids: number[] = selectedIds) => {
-    await deleteEntityRecords({
+  const handleDeleteAction = (apiUrl: string, ids: number[] = selectedIds) => {
+    void deleteEntityRecords({
       apiUrl,
       ids,
       payloadKey: 'selectedIds',
       onDeleted: () => setSelectedIds([]),
-      refresh: fetchRecord,
+      refresh: (nextUrl) => {
+        void fetchRecord(nextUrl);
+      },
       errorMessage: 'Failed to delete items:',
     });
   };
@@ -121,9 +126,9 @@ const Home: React.FC = () => {
   return (
     <div className="home" role="application" aria-label="Contact management application" data-testid="home-page">
       {bannerMessage ? (
-        <div className="home__banner" role="status" aria-live="polite" aria-atomic="true" data-testid="save-banner">
+        <output className="home__banner" aria-live="polite" aria-atomic="true" data-testid="save-banner">
           {bannerMessage}
-        </div>
+        </output>
       ) : null}
       {view === navContactList && (
         <>

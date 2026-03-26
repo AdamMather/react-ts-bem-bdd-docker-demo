@@ -11,6 +11,7 @@ interface LabelledInputProps {
   value: string;
   onChange: (e: ChangeEvent<HTMLInputElement>) => void;
   placeholder?: string;
+  list?: string;
   ariaLabel?: string;
   containerClassName?: string;
   inputClassName?: string;
@@ -29,6 +30,7 @@ const LabelledInput: React.FC<LabelledInputProps> = ({
   value,
   onChange,
   placeholder,
+  list,
   ariaLabel,
   containerClassName,
   inputClassName,
@@ -48,6 +50,7 @@ const LabelledInput: React.FC<LabelledInputProps> = ({
         value={value}
         onChange={onChange}
         placeholder={placeholder}
+        list={list}
         ariaLabel={ariaLabel}
         className={inputClassName}
         role={inputRole}
