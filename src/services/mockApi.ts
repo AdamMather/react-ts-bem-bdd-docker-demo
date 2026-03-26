@@ -1,4 +1,5 @@
 import { Address, BoardingOwnerRecord, Contact, Vehicle } from '../types';
+import { createEmptyBoardingOwnerRecord } from '../utils/boarding';
 
 type QueryParams = Record<string, string>;
 
@@ -125,84 +126,8 @@ let vehicles: Vehicle[] = [
   },
 ];
 
-const createBoardingOwnerRecord = (overrides: Partial<BoardingOwnerRecord>): BoardingOwnerRecord => ({
-  id: 0,
-  full_name: '',
-  address: '',
-  postcode: '',
-  phone: '',
-  email: '',
-  preferred_contact: 'phone',
-  emergency_contact_name: '',
-  emergency_contact_relationship: '',
-  emergency_contact_phone: '',
-  emergency_contact_preferred_contact: 'phone',
-  pet_name: '',
-  species: '',
-  breed: '',
-  date_of_birth: '',
-  sex: 'M',
-  neutered: false,
-  colour: '',
-  distinguishing_features: '',
-  microchip_number: '',
-  pet_photo_name: '',
-  vet_practice_name: '',
-  vet_phone: '',
-  emergency_vet_consent: false,
-  treatment_cost_limit: '',
-  insurance_provider_name: '',
-  policy_holder_name: '',
-  policy_number: '',
-  emergency_claims_phone: '',
-  excess_amount: '',
-  exclusions: '',
-  insurance_consent: false,
-  vaccinations: [],
-  vaccination_next_due_date: '',
-  vaccination_card_file_name: '',
-  health_conditions: '',
-  medication_required: false,
-  medication_name: '',
-  dose: '',
-  administration_time: '',
-  special_instructions: '',
-  recent_illness: false,
-  flea_treatment_date: '',
-  worming_treatment_date: '',
-  mix_with_other_dogs: 'yes',
-  aggression_toward: [],
-  separation_anxiety: false,
-  escape_risk: false,
-  triggers: '',
-  food_provided_by_owner: false,
-  food_type: '',
-  feeding_times: '',
-  portion_size: '',
-  treats_allowed: false,
-  exercise_preferences: '',
-  arrival_date: '',
-  departure_date: '',
-  dropoff_time: '',
-  collection_time: '',
-  grooming: false,
-  additional_exercise: false,
-  training_session: false,
-  owner_instructions: '',
-  vaccinated_agreement: false,
-  free_from_illness_agreement: false,
-  vet_treatment_authorized_agreement: false,
-  owner_responsible_costs_agreement: false,
-  info_accurate_agreement: false,
-  agrees_terms: false,
-  privacy_consent: false,
-  signature: '',
-  signed_date: '',
-  ...overrides,
-});
-
 let boardingOwners: BoardingOwnerRecord[] = [
-  createBoardingOwnerRecord({
+  createEmptyBoardingOwnerRecord({
     id: 1,
     full_name: 'Alice Morris',
     address: '10 Fleet Street, London',
@@ -276,7 +201,7 @@ let boardingOwners: BoardingOwnerRecord[] = [
     signature: 'Alice Morris',
     signed_date: '2026-03-15',
   }),
-  createBoardingOwnerRecord({
+  createEmptyBoardingOwnerRecord({
     id: 2,
     full_name: 'Ben Hughes',
     address: '12 Deansgate, Manchester',
@@ -346,7 +271,7 @@ let boardingOwners: BoardingOwnerRecord[] = [
     signature: 'Ben Hughes',
     signed_date: '2026-03-14',
   }),
-  createBoardingOwnerRecord({
+  createEmptyBoardingOwnerRecord({
     id: 3,
     full_name: 'Chloe Patel',
     address: '1 Queen Street, Bristol',
@@ -430,6 +355,41 @@ const filterSuggestions = (values: string[], query: string) =>
 const deleteByIds = <T extends { id: number }>(items: T[], ids: number[]) =>
   items.filter((item) => !ids.includes(item.id));
 
+const lookupSources: Record<string, string[]> = {
+  '/utils/vehiclemake': vehicleMakes,
+  '/utils/vehiclemodel': vehicleModels,
+  '/api/boarding/lookups/species': petSpecies,
+  '/api/boarding/lookups/breeds': petBreeds,
+  '/api/boarding/lookups/vets': vetPractices,
+  '/api/boarding/lookups/insurance-providers': insuranceProviders,
+};
+
+const getLookupResponse = (path: string, query = '') => {
+  const values = lookupSources[path];
+  if (!values) {
+    return null;
+  }
+
+  return { data: { suggestions: filterSuggestions(values, query) } };
+};
+
+const normalizeAddressPayload = (data: Address): Address => ({
+  ...data,
+  occupyStart: toDate(data.occupyStart as Date | string),
+  occupyEnd: toDate(data.occupyEnd as Date | string),
+});
+
+const normalizeVehiclePayload = (data: Vehicle): Vehicle => ({
+  ...data,
+  registered: toDate(data.registered),
+  purchased: toDate(data.purchased),
+});
+
+const matchIdFromPath = (path: string, expression: RegExp) => {
+  const match = path.match(expression);
+  return match ? Number(match[1]) : null;
+};
+
 const createDefaultAddress = (contactId: number, firstName: string, lastName: string): Address => ({
   id: nextAddressId++,
   contact_id: contactId,
@@ -454,72 +414,39 @@ const createDefaultVehicle = (contactId: number): Vehicle => ({
 const mockApi = {
   async get(url: string, options: RequestOptions = {}) {
     const path = normalizePath(url);
+    const query = options.params?.query || '';
 
-    if (path === '/api/contacts') {
-      return { data: contacts };
-    }
-
-    if (path === '/api/contact/names') {
-      return {
+    const collectionResponses = {
+      '/api/contacts': () => ({ data: contacts }),
+      '/api/contact/names': () => ({
         data: contacts.map((contact) => ({
           id: contact.id,
           contact: `${contact.first_name} ${contact.last_name}`.trim(),
         })),
-      };
+      }),
+      '/api/contact/address': () => ({ data: addresses }),
+      '/api/vehicles': () => ({ data: vehicles }),
+      '/api/boarding/owners': () => ({ data: boardingOwners }),
+    } satisfies Record<string, () => { data: unknown }>;
+
+    const collectionResponse = collectionResponses[path]?.();
+    if (collectionResponse) {
+      return collectionResponse;
     }
 
-    if (path === '/api/contact/address') {
-      return { data: addresses };
+    const addressContactId = matchIdFromPath(path, /^\/api\/contact\/address\/(\d+)$/);
+    if (addressContactId !== null) {
+      return { data: addresses.filter((address) => address.contact_id === addressContactId) };
     }
 
-    const addressByContact = path.match(/^\/api\/contact\/address\/(\d+)$/);
-    if (addressByContact) {
-      const contactId = Number(addressByContact[1]);
-      return { data: addresses.filter((address) => address.contact_id === contactId) };
+    const vehicleContactId = matchIdFromPath(path, /^\/api\/vehicles\/(\d+)$/);
+    if (vehicleContactId !== null) {
+      return { data: vehicles.filter((vehicle) => vehicle.contact_id === vehicleContactId) };
     }
 
-    if (path === '/api/vehicles') {
-      return { data: vehicles };
-    }
-
-    const vehiclesByContact = path.match(/^\/api\/vehicles\/(\d+)$/);
-    if (vehiclesByContact) {
-      const contactId = Number(vehiclesByContact[1]);
-      return { data: vehicles.filter((vehicle) => vehicle.contact_id === contactId) };
-    }
-
-    if (path === '/utils/vehiclemake') {
-      const query = options.params?.query || '';
-      return { data: { suggestions: filterSuggestions(vehicleMakes, query) } };
-    }
-
-    if (path === '/utils/vehiclemodel') {
-      const query = options.params?.query || '';
-      return { data: { suggestions: filterSuggestions(vehicleModels, query) } };
-    }
-
-    if (path === '/api/boarding/owners') {
-      return { data: boardingOwners };
-    }
-
-    if (path === '/api/boarding/lookups/species') {
-      const query = options.params?.query || '';
-      return { data: { suggestions: filterSuggestions(petSpecies, query) } };
-    }
-
-    if (path === '/api/boarding/lookups/breeds') {
-      const query = options.params?.query || '';
-      return { data: { suggestions: filterSuggestions(petBreeds, query) } };
-    }
-
-    if (path === '/api/boarding/lookups/vets') {
-      const query = options.params?.query || '';
-      return { data: { suggestions: filterSuggestions(vetPractices, query) } };
-    }
-
-    if (path === '/api/boarding/lookups/insurance-providers') {
-      const query = options.params?.query || '';
-      return { data: { suggestions: filterSuggestions(insuranceProviders, query) } };
+    const lookupResponse = getLookupResponse(path, query);
+    if (lookupResponse) {
+      return lookupResponse;
     }
 
     return { data: [] };
@@ -537,13 +464,13 @@ const mockApi = {
     }
 
     if (path === '/api/contact/address') {
-      const address = { ...(data as Address), id: nextAddressId++, occupyStart: toDate((data as Address).occupyStart as Date | string), occupyEnd: toDate((data as Address).occupyEnd as Date | string) };
+      const address = { ...normalizeAddressPayload(data as Address), id: nextAddressId++ };
       addresses = [...addresses, address];
       return { data: address };
     }
 
     if (path === '/api/vehicles') {
-      const vehicle = { ...(data as Vehicle), id: nextVehicleId++, registered: toDate((data as Vehicle).registered), purchased: toDate((data as Vehicle).purchased) };
+      const vehicle = { ...normalizeVehiclePayload(data as Vehicle), id: nextVehicleId++ };
       vehicles = [...vehicles, vehicle];
       return { data: vehicle };
     }
@@ -560,50 +487,46 @@ const mockApi = {
   async put(url: string, data: Contact | Address | Vehicle | BoardingOwnerRecord) {
     const path = normalizePath(url);
 
-    const contactMatch = path.match(/^\/api\/contacts\/(\d+)$/);
-    if (contactMatch) {
-      const id = Number(contactMatch[1]);
+    const contactId = matchIdFromPath(path, /^\/api\/contacts\/(\d+)$/);
+    if (contactId !== null) {
+      const id = contactId;
       contacts = contacts.map((contact) => (contact.id === id ? { ...(data as Contact), id } : contact));
       return { data: null };
     }
 
-    const addressMatch = path.match(/^\/api\/contact\/address\/(\d+)$/);
-    if (addressMatch) {
-      const id = Number(addressMatch[1]);
-      const nextAddress = data as Address;
+    const addressId = matchIdFromPath(path, /^\/api\/contact\/address\/(\d+)$/);
+    if (addressId !== null) {
+      const id = addressId;
+      const nextAddress = normalizeAddressPayload(data as Address);
       addresses = addresses.map((address) =>
         address.id === id
           ? {
               ...nextAddress,
               id,
-              occupyStart: toDate(nextAddress.occupyStart as Date | string),
-              occupyEnd: toDate(nextAddress.occupyEnd as Date | string),
             }
           : address
       );
       return { data: null };
     }
 
-    const vehicleMatch = path.match(/^\/api\/vehicles\/(\d+)$/);
-    if (vehicleMatch) {
-      const id = Number(vehicleMatch[1]);
-      const nextVehicle = data as Vehicle;
+    const vehicleId = matchIdFromPath(path, /^\/api\/vehicles\/(\d+)$/);
+    if (vehicleId !== null) {
+      const id = vehicleId;
+      const nextVehicle = normalizeVehiclePayload(data as Vehicle);
       vehicles = vehicles.map((vehicle) =>
         vehicle.id === id
           ? {
               ...nextVehicle,
               id,
-              registered: toDate(nextVehicle.registered),
-              purchased: toDate(nextVehicle.purchased),
             }
           : vehicle
       );
       return { data: null };
     }
 
-    const boardingOwnerMatch = path.match(/^\/api\/boarding\/owners\/(\d+)$/);
-    if (boardingOwnerMatch) {
-      const id = Number(boardingOwnerMatch[1]);
+    const boardingOwnerId = matchIdFromPath(path, /^\/api\/boarding\/owners\/(\d+)$/);
+    if (boardingOwnerId !== null) {
+      const id = boardingOwnerId;
       boardingOwners = boardingOwners.map((owner) =>
         owner.id === id ? { ...(data as BoardingOwnerRecord), id } : owner
       );

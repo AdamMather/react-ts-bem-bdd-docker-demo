@@ -5,100 +5,115 @@ import AutoCompleteTextbox from '../../components/organisms/AutoCompleteTextbox'
 import apiClient from '../../services/apiClient';
 import config from '../../config';
 import { BoardingOwnerRecord } from '../../types';
+import {
+  boardingAggressionOptions,
+  boardingContactPreferenceOptions,
+  boardingDeclarationDisplayLabels,
+  boardingDeclarationOptions,
+  boardingJourneySteps,
+  boardingMixOptions,
+  boardingSexOptions,
+  boardingSteps,
+  boardingVaccinationOptions,
+  createEmptyBoardingOwnerRecord,
+  getBoardingDeclarationValues,
+} from '../../utils/boarding';
 import { toggleSelectedId, useTimedBanner } from '../../utils/ui';
 import './KennelBoarding.css';
 
-const vaccinationOptions = ['Distemper', 'Parvovirus', 'Hepatitis', 'Leptospirosis', 'Kennel Cough'];
-const aggressionOptions = ['dogs', 'people'];
+const renderReviewSections = (
+  record: BoardingOwnerRecord,
+  onEditSection: (stepIndex: number) => void
+) => {
+  const sections = [
+    {
+      title: 'Owner Details',
+      stepIndex: 0,
+      rows: [
+        ['Owner:', record.full_name || '—'],
+        ['Phone:', record.phone || '—'],
+        ['Email:', record.email || '—'],
+        ['Emergency contact:', record.emergency_contact_name || '—'],
+      ],
+    },
+    {
+      title: 'Pet Details',
+      stepIndex: 1,
+      rows: [
+        ['Pet:', record.pet_name || '—'],
+        ['Species / breed:', [record.species, record.breed].filter(Boolean).join(' / ') || '—'],
+        ['Microchip:', record.microchip_number || '—'],
+      ],
+    },
+    {
+      title: 'Veterinary',
+      stepIndex: 2,
+      rows: [
+        ['Practice:', record.vet_practice_name || '—'],
+        ['Phone:', record.vet_phone || '—'],
+      ],
+    },
+    {
+      title: 'Insurance',
+      stepIndex: 3,
+      rows: [
+        ['Provider:', record.insurance_provider_name || '—'],
+        ['Policy number:', record.policy_number || '—'],
+      ],
+    },
+    {
+      title: 'Vaccinations',
+      stepIndex: 4,
+      rows: [
+        ['Confirmed:', record.vaccinations.join(', ') || '—'],
+        ['Next due:', record.vaccination_next_due_date || '—'],
+      ],
+    },
+    {
+      title: 'Health & Medication',
+      stepIndex: 5,
+      rows: [
+        ['Conditions:', record.health_conditions || '—'],
+        ['Medication:', record.medication_required ? `${record.medication_name || 'Required'}` : 'No'],
+      ],
+    },
+    {
+      title: 'Behaviour',
+      stepIndex: 6,
+      rows: [
+        ['Mix with other dogs:', record.mix_with_other_dogs],
+        ['Triggers:', record.triggers || '—'],
+      ],
+    },
+    {
+      title: 'Feeding & Routine',
+      stepIndex: 7,
+      rows: [
+        ['Food type:', record.food_type || '—'],
+        ['Feeding times:', record.feeding_times || '—'],
+      ],
+    },
+    {
+      title: 'Booking & Consent',
+      stepIndex: 8,
+      rows: [
+        ['Stay:', `${record.arrival_date || '—'} to ${record.departure_date || '—'}`],
+        ['Times:', `${record.dropoff_time || '—'} / ${record.collection_time || '—'}`],
+        ['Signature:', record.signature || '—'],
+      ],
+    },
+  ] as const;
 
-const steps = [
-  { id: 'owner', label: 'Owner Details' },
-  { id: 'pet', label: 'Pet Details' },
-  { id: 'vet', label: 'Veterinary' },
-  { id: 'insurance', label: 'Insurance' },
-  { id: 'vaccination', label: 'Vaccinations' },
-  { id: 'health', label: 'Health & Medication' },
-  { id: 'behaviour', label: 'Behaviour' },
-  { id: 'routine', label: 'Feeding & Routine' },
-  { id: 'booking', label: 'Booking & Consent' },
-];
-const reviewStep = { id: 'review', label: 'Confirmation' };
-const journeySteps = [...steps, reviewStep];
-
-const createEmptyRecord = (): BoardingOwnerRecord => ({
-  id: 0,
-  full_name: '',
-  address: '',
-  postcode: '',
-  phone: '',
-  email: '',
-  preferred_contact: 'phone',
-  emergency_contact_name: '',
-  emergency_contact_relationship: '',
-  emergency_contact_phone: '',
-  emergency_contact_preferred_contact: 'phone',
-  pet_name: '',
-  species: '',
-  breed: '',
-  date_of_birth: '',
-  sex: 'M',
-  neutered: false,
-  colour: '',
-  distinguishing_features: '',
-  microchip_number: '',
-  pet_photo_name: '',
-  vet_practice_name: '',
-  vet_phone: '',
-  emergency_vet_consent: false,
-  treatment_cost_limit: '',
-  insurance_provider_name: '',
-  policy_holder_name: '',
-  policy_number: '',
-  emergency_claims_phone: '',
-  excess_amount: '',
-  exclusions: '',
-  insurance_consent: false,
-  vaccinations: [],
-  vaccination_next_due_date: '',
-  vaccination_card_file_name: '',
-  health_conditions: '',
-  medication_required: false,
-  medication_name: '',
-  dose: '',
-  administration_time: '',
-  special_instructions: '',
-  recent_illness: false,
-  flea_treatment_date: '',
-  worming_treatment_date: '',
-  mix_with_other_dogs: 'yes',
-  aggression_toward: [],
-  separation_anxiety: false,
-  escape_risk: false,
-  triggers: '',
-  food_provided_by_owner: false,
-  food_type: '',
-  feeding_times: '',
-  portion_size: '',
-  treats_allowed: false,
-  exercise_preferences: '',
-  arrival_date: '',
-  departure_date: '',
-  dropoff_time: '',
-  collection_time: '',
-  grooming: false,
-  additional_exercise: false,
-  training_session: false,
-  owner_instructions: '',
-  vaccinated_agreement: false,
-  free_from_illness_agreement: false,
-  vet_treatment_authorized_agreement: false,
-  owner_responsible_costs_agreement: false,
-  info_accurate_agreement: false,
-  agrees_terms: false,
-  privacy_consent: false,
-  signature: '',
-  signed_date: '',
-});
+  return sections.map((section) => (
+    <ReviewSection key={section.title} title={section.title} onEdit={() => onEditSection(section.stepIndex)}>
+      {section.rows.map(([label, value]) => (
+        <p key={label}>
+          <strong>{label}</strong> {value}
+        </p>
+      ))}
+    </ReviewSection>
+  ));
+};
 
 type ViewState = 'list' | 'detail';
 
@@ -110,7 +125,7 @@ const KennelBoarding: React.FC = () => {
   const { bannerMessage, showBanner } = useTimedBanner();
 
   const handleAdd = () => {
-    setSelectedRecord(createEmptyRecord());
+    setSelectedRecord(createEmptyBoardingOwnerRecord());
     setView('detail');
   };
 
@@ -188,11 +203,190 @@ const KennelBoarding: React.FC = () => {
           />
         </section>
       ) : (
-        <BoardingDetailForm initialRecord={selectedRecord ?? createEmptyRecord()} onCancel={handleCancel} onSave={handleSave} />
+        <BoardingDetailForm initialRecord={selectedRecord ?? createEmptyBoardingOwnerRecord()} onCancel={handleCancel} onSave={handleSave} />
       )}
     </div>
   );
 };
+
+type BoardingFieldConfig =
+  | {
+      kind: 'text';
+      label: string;
+      name: keyof BoardingOwnerRecord & string;
+      inputType?: string;
+      placeholder?: string;
+      autoComplete?: string;
+      required?: boolean;
+      ariaInvalidKey?: string;
+    }
+  | {
+      kind: 'textarea';
+      label: string;
+      name: keyof BoardingOwnerRecord & string;
+      rows?: number;
+    }
+  | {
+      kind: 'toggle';
+      label: string;
+      name: keyof BoardingOwnerRecord & string;
+    }
+  | {
+      kind: 'radio';
+      label: string;
+      name: keyof BoardingOwnerRecord & string;
+      options: Array<{ label: string; value: string }>;
+    }
+  | {
+      kind: 'autocomplete';
+      id: string;
+      label: string;
+      name: keyof BoardingOwnerRecord & string;
+      ariaLabel: string;
+      placeholder: string;
+      apiUrl: string;
+    }
+  | {
+      kind: 'multiCheckbox';
+      label: string;
+      name: 'vaccinations' | 'aggression_toward';
+      options: string[];
+      displayLabels?: Record<string, string>;
+    }
+  | {
+      kind: 'declarationCheckboxes';
+      label: string;
+    };
+
+interface BoardingStepSection {
+  legend: string;
+  fields: BoardingFieldConfig[];
+}
+
+const renderBoardingField = (
+  field: BoardingFieldConfig,
+  record: BoardingOwnerRecord,
+  updateField: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void,
+  updateMultiSelect: (name: 'vaccinations' | 'aggression_toward', value: string) => void,
+  errorMessage: string,
+  setRecord: React.Dispatch<React.SetStateAction<BoardingOwnerRecord>>
+) => {
+  switch (field.kind) {
+    case 'text':
+      return (
+        <TextField
+          key={field.name}
+          label={field.label}
+          name={field.name}
+          value={record[field.name] as string}
+          onChange={updateField}
+          type={field.inputType}
+          placeholder={field.placeholder}
+          autoComplete={field.autoComplete}
+          required={field.required}
+          ariaInvalid={field.ariaInvalidKey ? errorMessage.includes(field.ariaInvalidKey) : undefined}
+        />
+      );
+
+    case 'textarea':
+      return (
+        <TextAreaField
+          key={field.name}
+          label={field.label}
+          name={field.name}
+          value={record[field.name] as string}
+          onChange={updateField}
+          rows={field.rows}
+        />
+      );
+
+    case 'toggle':
+      return (
+        <ToggleField
+          key={field.name}
+          label={field.label}
+          name={field.name}
+          checked={Boolean(record[field.name])}
+          onChange={updateField}
+        />
+      );
+
+    case 'radio':
+      return (
+        <RadioGroupField
+          key={field.name}
+          label={field.label}
+          name={field.name}
+          value={record[field.name] as string}
+          onChange={updateField}
+          options={field.options}
+        />
+      );
+
+    case 'autocomplete':
+      return (
+        <AutoCompleteTextbox
+          key={field.name}
+          id={field.id}
+          name={field.name}
+          label={field.label}
+          value={record[field.name] as string}
+          onChange={updateField}
+          ariaLabel={field.ariaLabel}
+          placeholder={field.placeholder}
+          apiUrl={field.apiUrl}
+        />
+      );
+
+    case 'multiCheckbox':
+      return (
+        <CheckboxListField
+          key={field.name}
+          label={field.label}
+          values={record[field.name] as string[]}
+          options={field.options}
+          displayLabels={field.displayLabels}
+          onChange={(value) => updateMultiSelect(field.name, value)}
+        />
+      );
+
+    case 'declarationCheckboxes':
+      return (
+        <CheckboxListField
+          key={field.label}
+          label={field.label}
+          values={getBoardingDeclarationValues(record)}
+          options={[...boardingDeclarationOptions]}
+          displayLabels={boardingDeclarationDisplayLabels}
+          onChange={(value) =>
+            setRecord((current) => ({
+              ...current,
+              [value]: !current[value as keyof BoardingOwnerRecord],
+            }))
+          }
+        />
+      );
+
+    default:
+      return null;
+  }
+};
+
+const renderBoardingStepSection = (
+  section: BoardingStepSection,
+  record: BoardingOwnerRecord,
+  updateField: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void,
+  updateMultiSelect: (name: 'vaccinations' | 'aggression_toward', value: string) => void,
+  errorMessage: string,
+  setRecord: React.Dispatch<React.SetStateAction<BoardingOwnerRecord>>
+) => (
+  <fieldset className="boarding-form__section">
+    <legend>{section.legend}</legend>
+    {section.fields.map((field) =>
+      renderBoardingField(field, record, updateField, updateMultiSelect, errorMessage, setRecord)
+    )}
+  </fieldset>
+);
 
 interface BoardingDetailFormProps {
   initialRecord: BoardingOwnerRecord;
@@ -220,10 +414,11 @@ const BoardingDetailForm: React.FC<BoardingDetailFormProps> = ({ initialRecord, 
     setErrorMessage('');
   }, [initialRecord]);
 
-  const currentJourneyIndex = isReviewing ? journeySteps.length - 1 : currentStep;
-  const progressPercent = ((currentJourneyIndex + 1) / journeySteps.length) * 100;
+  const currentJourneyIndex = isReviewing ? boardingJourneySteps.length - 1 : currentStep;
+  const progressPercent = ((currentJourneyIndex + 1) / boardingJourneySteps.length) * 100;
   const progressLabel = useMemo(
-    () => `Step ${currentJourneyIndex + 1} of ${journeySteps.length}: ${journeySteps[currentJourneyIndex].label}`,
+    () =>
+      `Step ${currentJourneyIndex + 1} of ${boardingJourneySteps.length}: ${boardingJourneySteps[currentJourneyIndex].label}`,
     [currentJourneyIndex]
   );
 
@@ -279,33 +474,33 @@ const BoardingDetailForm: React.FC<BoardingDetailFormProps> = ({ initialRecord, 
   };
 
   const handleNext = () => {
-    const message = validateStep(steps[currentStep].id);
+    const message = validateStep(boardingSteps[currentStep].id);
     if (message) {
       setErrorMessage(message);
       return;
     }
 
     setErrorMessage('');
-    if (currentStep === steps.length - 1) {
+    if (currentStep === boardingSteps.length - 1) {
       setIsReviewing(true);
       return;
     }
 
-    setCurrentStep((step) => Math.min(step + 1, steps.length - 1));
+    setCurrentStep((step) => Math.min(step + 1, boardingSteps.length - 1));
   };
 
   const handleConfirm = async () => {
     const message = validateStep('booking');
     if (message) {
       setIsReviewing(false);
-      setCurrentStep(steps.length - 1);
+      setCurrentStep(boardingSteps.length - 1);
       setErrorMessage(message);
       return;
     }
 
     if (!record.agrees_terms || !record.info_accurate_agreement || !record.privacy_consent) {
       setIsReviewing(false);
-      setCurrentStep(steps.length - 1);
+      setCurrentStep(boardingSteps.length - 1);
       setErrorMessage('Booking & Consent: please confirm the declaration and privacy consent.');
       return;
     }
@@ -329,6 +524,124 @@ const BoardingDetailForm: React.FC<BoardingDetailFormProps> = ({ initialRecord, 
     handleNext();
   };
 
+  const moveToStep = (stepIndex: number) => {
+    setIsReviewing(false);
+    setCurrentStep(stepIndex);
+  };
+
+  const stepSections: BoardingStepSection[] = [
+    {
+      legend: 'Owner and emergency contact',
+      fields: [
+        { kind: 'text', label: 'Full name', name: 'full_name', autoComplete: 'name', required: true, ariaInvalidKey: 'full name' },
+        { kind: 'textarea', label: 'Address', name: 'address', rows: 3 },
+        { kind: 'text', label: 'Postcode', name: 'postcode', autoComplete: 'postal-code' },
+        { kind: 'text', label: 'Phone number', name: 'phone', inputType: 'tel', autoComplete: 'tel', required: true, ariaInvalidKey: 'phone number' },
+        { kind: 'text', label: 'Email address', name: 'email', inputType: 'email', autoComplete: 'email', required: true },
+        { kind: 'radio', label: 'Preferred contact method', name: 'preferred_contact', options: [...boardingContactPreferenceOptions] },
+        { kind: 'text', label: 'Emergency contact name', name: 'emergency_contact_name', required: true },
+        { kind: 'text', label: 'Relationship', name: 'emergency_contact_relationship' },
+        { kind: 'text', label: 'Emergency contact phone', name: 'emergency_contact_phone', inputType: 'tel', required: true },
+        { kind: 'radio', label: 'Emergency contact preference', name: 'emergency_contact_preferred_contact', options: [...boardingContactPreferenceOptions] },
+      ],
+    },
+    {
+      legend: 'Pet identification',
+      fields: [
+        { kind: 'text', label: 'Pet name', name: 'pet_name', required: true, ariaInvalidKey: 'pet name' },
+        { kind: 'autocomplete', id: 'species', label: 'Species', name: 'species', ariaLabel: 'Pet species', placeholder: 'Start typing species', apiUrl: apiBoardingSpecies },
+        { kind: 'autocomplete', id: 'breed', label: 'Breed', name: 'breed', ariaLabel: 'Pet breed', placeholder: 'Start typing breed', apiUrl: apiBoardingBreeds },
+        { kind: 'text', label: 'Date of birth / age', name: 'date_of_birth', inputType: 'date' },
+        { kind: 'radio', label: 'Sex', name: 'sex', options: [...boardingSexOptions] },
+        { kind: 'toggle', label: 'Neutered / spayed', name: 'neutered' },
+        { kind: 'text', label: 'Colour', name: 'colour' },
+        { kind: 'textarea', label: 'Distinguishing features', name: 'distinguishing_features', rows: 3 },
+        { kind: 'text', label: 'Microchip number', name: 'microchip_number' },
+        { kind: 'text', label: 'Pet photo file name', name: 'pet_photo_name', placeholder: 'e.g. bella.jpg' },
+      ],
+    },
+    {
+      legend: 'Veterinary information',
+      fields: [
+        { kind: 'autocomplete', id: 'vet_practice_name', label: 'Vet practice name', name: 'vet_practice_name', ariaLabel: 'Vet practice name', placeholder: 'Start typing vet practice', apiUrl: apiBoardingVets },
+        { kind: 'text', label: 'Vet phone number', name: 'vet_phone', inputType: 'tel' },
+        { kind: 'toggle', label: 'Emergency vet consent', name: 'emergency_vet_consent' },
+        { kind: 'text', label: 'Treatment cost limit (£)', name: 'treatment_cost_limit', inputType: 'number' },
+      ],
+    },
+    {
+      legend: 'Pet insurance',
+      fields: [
+        { kind: 'autocomplete', id: 'insurance_provider_name', label: 'Insurance provider name', name: 'insurance_provider_name', ariaLabel: 'Insurance provider name', placeholder: 'Start typing insurer', apiUrl: apiBoardingInsuranceProviders },
+        { kind: 'text', label: 'Policy holder name', name: 'policy_holder_name' },
+        { kind: 'text', label: 'Policy number', name: 'policy_number' },
+        { kind: 'text', label: 'Emergency claims phone number', name: 'emergency_claims_phone', inputType: 'tel' },
+        { kind: 'text', label: 'Excess amount (£)', name: 'excess_amount', inputType: 'number' },
+        { kind: 'textarea', label: 'Known exclusions', name: 'exclusions', rows: 3 },
+        { kind: 'toggle', label: 'Owner understands kennel does not process claims', name: 'insurance_consent' },
+      ],
+    },
+    {
+      legend: 'Vaccination record',
+      fields: [
+        { kind: 'multiCheckbox', label: 'Vaccination confirmations', name: 'vaccinations', options: [...boardingVaccinationOptions] },
+        { kind: 'text', label: 'Next vaccination due date', name: 'vaccination_next_due_date', inputType: 'date' },
+        { kind: 'text', label: 'Vaccination card file name', name: 'vaccination_card_file_name', placeholder: 'e.g. vaccine-card.pdf' },
+      ],
+    },
+    {
+      legend: 'Health and medication',
+      fields: [
+        { kind: 'textarea', label: 'Current health conditions', name: 'health_conditions', rows: 3 },
+        { kind: 'toggle', label: 'Medication required', name: 'medication_required' },
+        { kind: 'text', label: 'Medication name', name: 'medication_name' },
+        { kind: 'text', label: 'Dose', name: 'dose' },
+        { kind: 'text', label: 'Administration time', name: 'administration_time' },
+        { kind: 'textarea', label: 'Special instructions', name: 'special_instructions', rows: 3 },
+        { kind: 'toggle', label: 'Recent illness in last 30 days', name: 'recent_illness' },
+        { kind: 'text', label: 'Last flea treatment date', name: 'flea_treatment_date', inputType: 'date' },
+        { kind: 'text', label: 'Last worming treatment date', name: 'worming_treatment_date', inputType: 'date' },
+      ],
+    },
+    {
+      legend: 'Behaviour and temperament',
+      fields: [
+        { kind: 'radio', label: 'Can the pet mix with other dogs?', name: 'mix_with_other_dogs', options: [...boardingMixOptions] },
+        { kind: 'multiCheckbox', label: 'Aggression shown toward', name: 'aggression_toward', options: [...boardingAggressionOptions] },
+        { kind: 'toggle', label: 'Separation anxiety', name: 'separation_anxiety' },
+        { kind: 'toggle', label: 'Escape risk', name: 'escape_risk' },
+        { kind: 'textarea', label: 'Fears or triggers', name: 'triggers', rows: 3 },
+      ],
+    },
+    {
+      legend: 'Feeding and routine',
+      fields: [
+        { kind: 'toggle', label: 'Food provided by owner', name: 'food_provided_by_owner' },
+        { kind: 'text', label: 'Food type', name: 'food_type', ariaInvalidKey: 'food type' },
+        { kind: 'text', label: 'Feeding times', name: 'feeding_times', placeholder: 'e.g. 07:30, 17:30' },
+        { kind: 'text', label: 'Portion size', name: 'portion_size' },
+        { kind: 'toggle', label: 'Treats allowed', name: 'treats_allowed' },
+        { kind: 'textarea', label: 'Exercise preferences', name: 'exercise_preferences', rows: 3 },
+      ],
+    },
+    {
+      legend: 'Booking and declaration',
+      fields: [
+        { kind: 'text', label: 'Arrival date', name: 'arrival_date', inputType: 'date', ariaInvalidKey: 'arrival date' },
+        { kind: 'text', label: 'Departure date', name: 'departure_date', inputType: 'date', ariaInvalidKey: 'departure date' },
+        { kind: 'text', label: 'Drop-off time', name: 'dropoff_time', inputType: 'time', ariaInvalidKey: 'drop-off time' },
+        { kind: 'text', label: 'Collection time', name: 'collection_time', inputType: 'time', ariaInvalidKey: 'collection time' },
+        { kind: 'toggle', label: 'Include grooming', name: 'grooming' },
+        { kind: 'toggle', label: 'Additional exercise', name: 'additional_exercise' },
+        { kind: 'toggle', label: 'Training session', name: 'training_session' },
+        { kind: 'textarea', label: 'Owner instructions', name: 'owner_instructions', rows: 4 },
+        { kind: 'declarationCheckboxes', label: 'Booking declaration' },
+        { kind: 'text', label: 'Signature', name: 'signature', required: true, ariaInvalidKey: 'signature' },
+        { kind: 'text', label: 'Signed date', name: 'signed_date', inputType: 'date' },
+      ],
+    },
+  ];
+
   return (
     <section className="boarding-page__panel">
       <div className="boarding-form__header">
@@ -350,258 +663,16 @@ const BoardingDetailForm: React.FC<BoardingDetailFormProps> = ({ initialRecord, 
           <div className="boarding-form__progressbar-fill" style={{ width: `${progressPercent}%` }} />
         </div>
         <div className="boarding-form__progressbar-meta">
-          <span>{journeySteps[currentJourneyIndex].label}</span>
+          <span>{boardingJourneySteps[currentJourneyIndex].label}</span>
           <span>{Math.round(progressPercent)}%</span>
         </div>
       </div>
 
       <form className="boarding-form" onSubmit={handleFormSubmit} noValidate>
-        {!isReviewing && currentStep === 0 ? (
-          <fieldset className="boarding-form__section">
-            <legend>Owner and emergency contact</legend>
-            <TextField label="Full name" name="full_name" value={record.full_name} onChange={updateField} autoComplete="name" required ariaInvalid={errorMessage.includes('full name')} />
-            <TextAreaField label="Address" name="address" value={record.address} onChange={updateField} rows={3} />
-            <TextField label="Postcode" name="postcode" value={record.postcode} onChange={updateField} autoComplete="postal-code" />
-            <TextField label="Phone number" name="phone" value={record.phone} onChange={updateField} type="tel" autoComplete="tel" required ariaInvalid={errorMessage.includes('phone number')} />
-            <TextField label="Email address" name="email" value={record.email} onChange={updateField} type="email" autoComplete="email" required />
-            <RadioGroupField
-              label="Preferred contact method"
-              name="preferred_contact"
-              value={record.preferred_contact}
-              onChange={updateField}
-              options={[
-                { label: 'Phone', value: 'phone' },
-                { label: 'Email', value: 'email' },
-                { label: 'Text', value: 'text' },
-              ]}
-            />
-            <TextField label="Emergency contact name" name="emergency_contact_name" value={record.emergency_contact_name} onChange={updateField} required />
-            <TextField label="Relationship" name="emergency_contact_relationship" value={record.emergency_contact_relationship} onChange={updateField} />
-            <TextField label="Emergency contact phone" name="emergency_contact_phone" value={record.emergency_contact_phone} onChange={updateField} type="tel" required />
-            <RadioGroupField
-              label="Emergency contact preference"
-              name="emergency_contact_preferred_contact"
-              value={record.emergency_contact_preferred_contact}
-              onChange={updateField}
-              options={[
-                { label: 'Phone', value: 'phone' },
-                { label: 'Email', value: 'email' },
-                { label: 'Text', value: 'text' },
-              ]}
-            />
-          </fieldset>
-        ) : null}
-
-        {!isReviewing && currentStep === 1 ? (
-          <fieldset className="boarding-form__section">
-            <legend>Pet identification</legend>
-            <TextField label="Pet name" name="pet_name" value={record.pet_name} onChange={updateField} required ariaInvalid={errorMessage.includes('pet name')} />
-            <AutoCompleteTextbox id="species" name="species" label="Species" value={record.species} onChange={updateField} ariaLabel="Pet species" placeholder="Start typing species" apiUrl={apiBoardingSpecies} />
-            <AutoCompleteTextbox id="breed" name="breed" label="Breed" value={record.breed} onChange={updateField} ariaLabel="Pet breed" placeholder="Start typing breed" apiUrl={apiBoardingBreeds} />
-            <TextField label="Date of birth / age" name="date_of_birth" value={record.date_of_birth} onChange={updateField} type="date" />
-            <RadioGroupField
-              label="Sex"
-              name="sex"
-              value={record.sex}
-              onChange={updateField}
-              options={[
-                { label: 'Male', value: 'M' },
-                { label: 'Female', value: 'F' },
-              ]}
-            />
-            <ToggleField label="Neutered / spayed" name="neutered" checked={record.neutered} onChange={updateField} />
-            <TextField label="Colour" name="colour" value={record.colour} onChange={updateField} />
-            <TextAreaField label="Distinguishing features" name="distinguishing_features" value={record.distinguishing_features} onChange={updateField} rows={3} />
-            <TextField label="Microchip number" name="microchip_number" value={record.microchip_number} onChange={updateField} />
-            <TextField label="Pet photo file name" name="pet_photo_name" value={record.pet_photo_name} onChange={updateField} placeholder="e.g. bella.jpg" />
-          </fieldset>
-        ) : null}
-
-        {!isReviewing && currentStep === 2 ? (
-          <fieldset className="boarding-form__section">
-            <legend>Veterinary information</legend>
-            <AutoCompleteTextbox id="vet_practice_name" name="vet_practice_name" label="Vet practice name" value={record.vet_practice_name} onChange={updateField} ariaLabel="Vet practice name" placeholder="Start typing vet practice" apiUrl={apiBoardingVets} />
-            <TextField label="Vet phone number" name="vet_phone" value={record.vet_phone} onChange={updateField} type="tel" />
-            <ToggleField label="Emergency vet consent" name="emergency_vet_consent" checked={record.emergency_vet_consent} onChange={updateField} />
-            <TextField label="Treatment cost limit (£)" name="treatment_cost_limit" value={record.treatment_cost_limit} onChange={updateField} type="number" />
-          </fieldset>
-        ) : null}
-
-        {!isReviewing && currentStep === 3 ? (
-          <fieldset className="boarding-form__section">
-            <legend>Pet insurance</legend>
-            <AutoCompleteTextbox id="insurance_provider_name" name="insurance_provider_name" label="Insurance provider name" value={record.insurance_provider_name} onChange={updateField} ariaLabel="Insurance provider name" placeholder="Start typing insurer" apiUrl={apiBoardingInsuranceProviders} />
-            <TextField label="Policy holder name" name="policy_holder_name" value={record.policy_holder_name} onChange={updateField} />
-            <TextField label="Policy number" name="policy_number" value={record.policy_number} onChange={updateField} />
-            <TextField label="Emergency claims phone number" name="emergency_claims_phone" value={record.emergency_claims_phone} onChange={updateField} type="tel" />
-            <TextField label="Excess amount (£)" name="excess_amount" value={record.excess_amount} onChange={updateField} type="number" />
-            <TextAreaField label="Known exclusions" name="exclusions" value={record.exclusions} onChange={updateField} rows={3} />
-            <ToggleField label="Owner understands kennel does not process claims" name="insurance_consent" checked={record.insurance_consent} onChange={updateField} />
-          </fieldset>
-        ) : null}
-
-        {!isReviewing && currentStep === 4 ? (
-          <fieldset className="boarding-form__section">
-            <legend>Vaccination record</legend>
-            <CheckboxListField
-              label="Vaccination confirmations"
-              values={record.vaccinations}
-              options={vaccinationOptions}
-              onChange={(value) => updateMultiSelect('vaccinations', value)}
-            />
-            <TextField label="Next vaccination due date" name="vaccination_next_due_date" value={record.vaccination_next_due_date} onChange={updateField} type="date" />
-            <TextField label="Vaccination card file name" name="vaccination_card_file_name" value={record.vaccination_card_file_name} onChange={updateField} placeholder="e.g. vaccine-card.pdf" />
-          </fieldset>
-        ) : null}
-
-        {!isReviewing && currentStep === 5 ? (
-          <fieldset className="boarding-form__section">
-            <legend>Health and medication</legend>
-            <TextAreaField label="Current health conditions" name="health_conditions" value={record.health_conditions} onChange={updateField} rows={3} />
-            <ToggleField label="Medication required" name="medication_required" checked={record.medication_required} onChange={updateField} />
-            <TextField label="Medication name" name="medication_name" value={record.medication_name} onChange={updateField} />
-            <TextField label="Dose" name="dose" value={record.dose} onChange={updateField} />
-            <TextField label="Administration time" name="administration_time" value={record.administration_time} onChange={updateField} />
-            <TextAreaField label="Special instructions" name="special_instructions" value={record.special_instructions} onChange={updateField} rows={3} />
-            <ToggleField label="Recent illness in last 30 days" name="recent_illness" checked={record.recent_illness} onChange={updateField} />
-            <TextField label="Last flea treatment date" name="flea_treatment_date" value={record.flea_treatment_date} onChange={updateField} type="date" />
-            <TextField label="Last worming treatment date" name="worming_treatment_date" value={record.worming_treatment_date} onChange={updateField} type="date" />
-          </fieldset>
-        ) : null}
-
-        {!isReviewing && currentStep === 6 ? (
-          <fieldset className="boarding-form__section">
-            <legend>Behaviour and temperament</legend>
-            <RadioGroupField
-              label="Can the pet mix with other dogs?"
-              name="mix_with_other_dogs"
-              value={record.mix_with_other_dogs}
-              onChange={updateField}
-              options={[
-                { label: 'Yes', value: 'yes' },
-                { label: 'No', value: 'no' },
-                { label: 'Unsure', value: 'unsure' },
-              ]}
-            />
-            <CheckboxListField
-              label="Aggression shown toward"
-              values={record.aggression_toward}
-              options={aggressionOptions}
-              onChange={(value) => updateMultiSelect('aggression_toward', value)}
-            />
-            <ToggleField label="Separation anxiety" name="separation_anxiety" checked={record.separation_anxiety} onChange={updateField} />
-            <ToggleField label="Escape risk" name="escape_risk" checked={record.escape_risk} onChange={updateField} />
-            <TextAreaField label="Fears or triggers" name="triggers" value={record.triggers} onChange={updateField} rows={3} />
-          </fieldset>
-        ) : null}
-
-        {!isReviewing && currentStep === 7 ? (
-          <fieldset className="boarding-form__section">
-            <legend>Feeding and routine</legend>
-            <ToggleField label="Food provided by owner" name="food_provided_by_owner" checked={record.food_provided_by_owner} onChange={updateField} />
-            <TextField label="Food type" name="food_type" value={record.food_type} onChange={updateField} ariaInvalid={errorMessage.includes('food type')} />
-            <TextField label="Feeding times" name="feeding_times" value={record.feeding_times} onChange={updateField} placeholder="e.g. 07:30, 17:30" />
-            <TextField label="Portion size" name="portion_size" value={record.portion_size} onChange={updateField} />
-            <ToggleField label="Treats allowed" name="treats_allowed" checked={record.treats_allowed} onChange={updateField} />
-            <TextAreaField label="Exercise preferences" name="exercise_preferences" value={record.exercise_preferences} onChange={updateField} rows={3} />
-          </fieldset>
-        ) : null}
-
-        {!isReviewing && currentStep === 8 ? (
-          <fieldset className="boarding-form__section">
-            <legend>Booking and declaration</legend>
-            <TextField label="Arrival date" name="arrival_date" value={record.arrival_date} onChange={updateField} type="date" ariaInvalid={errorMessage.includes('arrival date')} />
-            <TextField label="Departure date" name="departure_date" value={record.departure_date} onChange={updateField} type="date" ariaInvalid={errorMessage.includes('departure date')} />
-            <TextField label="Drop-off time" name="dropoff_time" value={record.dropoff_time} onChange={updateField} type="time" ariaInvalid={errorMessage.includes('drop-off time')} />
-            <TextField label="Collection time" name="collection_time" value={record.collection_time} onChange={updateField} type="time" ariaInvalid={errorMessage.includes('collection time')} />
-            <ToggleField label="Include grooming" name="grooming" checked={record.grooming} onChange={updateField} />
-            <ToggleField label="Additional exercise" name="additional_exercise" checked={record.additional_exercise} onChange={updateField} />
-            <ToggleField label="Training session" name="training_session" checked={record.training_session} onChange={updateField} />
-            <TextAreaField label="Owner instructions" name="owner_instructions" value={record.owner_instructions} onChange={updateField} rows={4} />
-            <CheckboxListField
-              label="Booking declaration"
-              values={[
-                ...(record.vaccinated_agreement ? ['vaccinated_agreement'] : []),
-                ...(record.free_from_illness_agreement ? ['free_from_illness_agreement'] : []),
-                ...(record.vet_treatment_authorized_agreement ? ['vet_treatment_authorized_agreement'] : []),
-                ...(record.owner_responsible_costs_agreement ? ['owner_responsible_costs_agreement'] : []),
-                ...(record.info_accurate_agreement ? ['info_accurate_agreement'] : []),
-                ...(record.agrees_terms ? ['agrees_terms'] : []),
-                ...(record.privacy_consent ? ['privacy_consent'] : []),
-              ]}
-              options={[
-                'vaccinated_agreement',
-                'free_from_illness_agreement',
-                'vet_treatment_authorized_agreement',
-                'owner_responsible_costs_agreement',
-                'info_accurate_agreement',
-                'agrees_terms',
-                'privacy_consent',
-              ]}
-              displayLabels={{
-                vaccinated_agreement: 'Vaccinations are up to date',
-                free_from_illness_agreement: 'Pet is free from contagious illness',
-                vet_treatment_authorized_agreement: 'Vet treatment is authorized if needed',
-                owner_responsible_costs_agreement: 'Owner accepts treatment costs',
-                info_accurate_agreement: 'Information supplied is accurate',
-                agrees_terms: 'Owner agrees to boarding terms',
-                privacy_consent: 'Owner gives privacy consent',
-              }}
-              onChange={(value) =>
-                setRecord((current) => ({
-                  ...current,
-                  [value]: !current[value as keyof BoardingOwnerRecord],
-                }))
-              }
-            />
-            <TextField label="Signature" name="signature" value={record.signature} onChange={updateField} required ariaInvalid={errorMessage.includes('signature')} />
-            <TextField label="Signed date" name="signed_date" value={record.signed_date} onChange={updateField} type="date" />
-          </fieldset>
-        ) : null}
+        {!isReviewing ? renderBoardingStepSection(stepSections[currentStep], record, updateField, updateMultiSelect, errorMessage, setRecord) : null}
 
         {isReviewing ? (
-          <section className="boarding-form__review">
-            <ReviewSection title="Owner Details" onEdit={() => { setIsReviewing(false); setCurrentStep(0); }}>
-              <p><strong>Owner:</strong> {record.full_name || '—'}</p>
-              <p><strong>Phone:</strong> {record.phone || '—'}</p>
-              <p><strong>Email:</strong> {record.email || '—'}</p>
-              <p><strong>Emergency contact:</strong> {record.emergency_contact_name || '—'}</p>
-            </ReviewSection>
-            <ReviewSection title="Pet Details" onEdit={() => { setIsReviewing(false); setCurrentStep(1); }}>
-              <p><strong>Pet:</strong> {record.pet_name || '—'}</p>
-              <p><strong>Species / breed:</strong> {[record.species, record.breed].filter(Boolean).join(' / ') || '—'}</p>
-              <p><strong>Microchip:</strong> {record.microchip_number || '—'}</p>
-            </ReviewSection>
-            <ReviewSection title="Veterinary" onEdit={() => { setIsReviewing(false); setCurrentStep(2); }}>
-              <p><strong>Practice:</strong> {record.vet_practice_name || '—'}</p>
-              <p><strong>Phone:</strong> {record.vet_phone || '—'}</p>
-            </ReviewSection>
-            <ReviewSection title="Insurance" onEdit={() => { setIsReviewing(false); setCurrentStep(3); }}>
-              <p><strong>Provider:</strong> {record.insurance_provider_name || '—'}</p>
-              <p><strong>Policy number:</strong> {record.policy_number || '—'}</p>
-            </ReviewSection>
-            <ReviewSection title="Vaccinations" onEdit={() => { setIsReviewing(false); setCurrentStep(4); }}>
-              <p><strong>Confirmed:</strong> {record.vaccinations.join(', ') || '—'}</p>
-              <p><strong>Next due:</strong> {record.vaccination_next_due_date || '—'}</p>
-            </ReviewSection>
-            <ReviewSection title="Health & Medication" onEdit={() => { setIsReviewing(false); setCurrentStep(5); }}>
-              <p><strong>Conditions:</strong> {record.health_conditions || '—'}</p>
-              <p><strong>Medication:</strong> {record.medication_required ? `${record.medication_name || 'Required'}` : 'No'}</p>
-            </ReviewSection>
-            <ReviewSection title="Behaviour" onEdit={() => { setIsReviewing(false); setCurrentStep(6); }}>
-              <p><strong>Mix with other dogs:</strong> {record.mix_with_other_dogs}</p>
-              <p><strong>Triggers:</strong> {record.triggers || '—'}</p>
-            </ReviewSection>
-            <ReviewSection title="Feeding & Routine" onEdit={() => { setIsReviewing(false); setCurrentStep(7); }}>
-              <p><strong>Food type:</strong> {record.food_type || '—'}</p>
-              <p><strong>Feeding times:</strong> {record.feeding_times || '—'}</p>
-            </ReviewSection>
-            <ReviewSection title="Booking & Consent" onEdit={() => { setIsReviewing(false); setCurrentStep(8); }}>
-              <p><strong>Stay:</strong> {record.arrival_date || '—'} to {record.departure_date || '—'}</p>
-              <p><strong>Times:</strong> {record.dropoff_time || '—'} / {record.collection_time || '—'}</p>
-              <p><strong>Signature:</strong> {record.signature || '—'}</p>
-            </ReviewSection>
-          </section>
+          <section className="boarding-form__review">{renderReviewSections(record, moveToStep)}</section>
         ) : null}
 
         {errorMessage ? (
@@ -618,7 +689,7 @@ const BoardingDetailForm: React.FC<BoardingDetailFormProps> = ({ initialRecord, 
               setErrorMessage('');
               if (isReviewing) {
                 setIsReviewing(false);
-                setCurrentStep(steps.length - 1);
+                setCurrentStep(boardingSteps.length - 1);
                 return;
               }
               setCurrentStep((step) => Math.max(step - 1, 0));
@@ -634,7 +705,7 @@ const BoardingDetailForm: React.FC<BoardingDetailFormProps> = ({ initialRecord, 
               </button>
             ) : (
               <button type="submit" className="boarding-form__primary-button">
-                {currentStep === steps.length - 1 ? 'Review details' : 'Next step'}
+                {currentStep === boardingSteps.length - 1 ? 'Review details' : 'Next step'}
               </button>
             )}
           </div>

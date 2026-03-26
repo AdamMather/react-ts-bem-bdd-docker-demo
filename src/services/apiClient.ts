@@ -16,6 +16,9 @@ interface RequestOptions {
   data?: ApiPayload;
 }
 
+type MutationPayload = Contact | Address | Vehicle | BoardingOwnerRecord;
+type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
+
 const buildUrl = (url: string, params?: QueryParams): string => {
   if (!params || Object.keys(params).length === 0) {
     return url;
@@ -37,99 +40,66 @@ const parseJson = async (response: Response) => {
   return response.json();
 };
 
+const performRequest = (method: HttpMethod, url: string, options: RequestOptions = {}) => {
+  if (method === 'GET') {
+    return fetch(buildUrl(url, options.params), {
+      headers: { Accept: 'application/json' },
+    });
+  }
+
+  return fetch(url, {
+    method,
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify(options.data ?? {}),
+  });
+};
+
+const requestWithMockFallback = async (
+  method: HttpMethod,
+  url: string,
+  options: RequestOptions = {}
+) => {
+  const mockHandlers = {
+    GET: () => mockApi.get(url, options),
+    POST: () => mockApi.post(url, options.data as MutationPayload),
+    PUT: () => mockApi.put(url, options.data as MutationPayload),
+    DELETE: () => mockApi.delete(url, options),
+  } satisfies Record<HttpMethod, () => Promise<{ data: unknown }>>;
+
+  if (import.meta.env.VITE_USE_MOCK_API === 'true') {
+    return mockHandlers[method]();
+  }
+
+  let response: Response;
+
+  try {
+    response = await performRequest(method, url, options);
+  } catch {
+    return mockHandlers[method]();
+  }
+
+  if (!response.ok) {
+    throw new Error(`Request failed with status ${response.status}`);
+  }
+
+  return { data: await parseJson(response) };
+};
+
 const apiClient = {
   async get(url: string, options: RequestOptions = {}) {
-    if (import.meta.env.VITE_USE_MOCK_API === 'true') {
-      return mockApi.get(url, options);
-    }
-
-    let response: Response;
-
-    try {
-      response = await fetch(buildUrl(url, options.params), {
-        headers: { Accept: 'application/json' },
-      });
-    } catch (error) {
-      return mockApi.get(url, options);
-    }
-
-    if (!response.ok) {
-      throw new Error(`Request failed with status ${response.status}`);
-    }
-
-    return { data: await parseJson(response) };
+    return requestWithMockFallback('GET', url, options);
   },
 
   async post(url: string, data: ApiPayload) {
-    if (import.meta.env.VITE_USE_MOCK_API === 'true') {
-      return mockApi.post(url, data as Contact | Address | Vehicle | BoardingOwnerRecord);
-    }
-
-    let response: Response;
-
-    try {
-      response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify(data ?? {}),
-      });
-    } catch (error) {
-      return mockApi.post(url, data as Contact | Address | Vehicle | BoardingOwnerRecord);
-    }
-
-    if (!response.ok) {
-      throw new Error(`Request failed with status ${response.status}`);
-    }
-
-    return { data: await parseJson(response) };
+    return requestWithMockFallback('POST', url, { data });
   },
 
   async put(url: string, data: ApiPayload) {
-    if (import.meta.env.VITE_USE_MOCK_API === 'true') {
-      return mockApi.put(url, data as Contact | Address | Vehicle | BoardingOwnerRecord);
-    }
-
-    let response: Response;
-
-    try {
-      response = await fetch(url, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify(data ?? {}),
-      });
-    } catch (error) {
-      return mockApi.put(url, data as Contact | Address | Vehicle | BoardingOwnerRecord);
-    }
-
-    if (!response.ok) {
-      throw new Error(`Request failed with status ${response.status}`);
-    }
-
-    return { data: await parseJson(response) };
+    return requestWithMockFallback('PUT', url, { data });
   },
 
   async delete(url: string, options: RequestOptions = {}) {
-    if (import.meta.env.VITE_USE_MOCK_API === 'true') {
-      return mockApi.delete(url, options);
-    }
-
-    let response: Response;
-
-    try {
-      response = await fetch(url, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify(options.data ?? {}),
-      });
-    } catch (error) {
-      return mockApi.delete(url, options);
-    }
-
-    if (!response.ok) {
-      throw new Error(`Request failed with status ${response.status}`);
-    }
-
-    return { data: await parseJson(response) };
+    return requestWithMockFallback('DELETE', url, options);
   },
 };
 
